@@ -121,3 +121,22 @@ plt.xlabel("Importance Score")
 plt.ylabel("Feature")
 plt.tight_layout()
 plt.show()
+
+def predict_fraud(df):
+    """Predict fraud probabilities for a given dataset."""
+    features = [
+        "age", "months_as_customer", "policy_deductable", "policy_annual_premium",
+        "umbrella_limit", "capital_gains", "capital_loss", "incident_hour_of_the_day",
+        "number_of_vehicles_involved", "bodily_injuries", "witnesses",
+        "total_claim_amount", "injury_claim", "property_claim", "vehicle_claim"
+    ]
+
+    X = df[features]
+    fraud_probs = model.predict_proba(X)[:, 1]  # Get fraud probability (column 1)
+    return fraud_probs
+
+
+
+
+
+
