@@ -1,27 +1,39 @@
 import os
 import io
 import pandas as pd
-from flask import Flask, request, render_template, send_file
+from flask import Flask, request, render_template, send_file, redirect, url_for
 from werkzeug.utils import secure_filename
-import model  # your fraud detection logic
+import model
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load environment + MongoDB setup
 load_dotenv()
 mongo_uri = os.getenv("MONGO_URI")
 client = MongoClient(mongo_uri)
 db = client["claims-fraud-db"]
 
-# Flask configuration
 app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
+OUTPUT_FOLDER = "outputs"
 ALLOWED_EXTENSIONS = {"csv"}
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["OUTPUT_FOLDER"] = OUTPUT_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def get_versioned_collection_name(base):
+    """Create a versioned collection name if one already exists."""
+    existing = db.list_collection_names()
+    if base not in existing:
+        return base
+    i = 2
+    while f"{base}_{i}" in existing:
+        i += 1
+    return f"{base}_{i}"
 
 @app.route("/", methods=["GET", "POST"])
 def upload_file():
@@ -29,42 +41,44 @@ def upload_file():
         file = request.files["file"]
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
+            base = os.path.splitext(filename)[0]
             filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
             file.save(filepath)
 
-            # Load and process data
+            # Load, enrich, score
             df = pd.read_csv(filepath)
             model.initialize_model(df)
             enriched_df = model.predict_fraud(df)
 
-            # Save to MongoDB collection named after the file (excluding extension)
-            collection_name = os.path.splitext(filename)[0]
-            file_collection = db[collection_name]
-            file_collection.insert_many(enriched_df.to_dict(orient="records"))
+            # Get unique collection name and store in MongoDB
+            collection_name = get_versioned_collection_name(base)
+            db[collection_name].insert_many(enriched_df.to_dict(orient="records"))
 
-            # Create downloadable CSV
-            csv_buffer = io.StringIO()
-            enriched_df.to_csv(csv_buffer, index=False)
-            csv_buffer.seek(0)
+            # Save enriched CSV locally for download
+            output_path = os.path.join(app.config["OUTPUT_FOLDER"], f"{collection_name}.csv")
+            enriched_df.to_csv(output_path, index=False)
 
-            download_filename = f"{collection_name}_scored.csv"
-            return send_file(
-                io.BytesIO(csv_buffer.getvalue().encode()),
-                mimetype="text/csv",
-                as_attachment=True,
-                download_name=download_filename
-            )
+            return redirect(url_for("results", filename=f"{collection_name}.csv"))
 
     return render_template("index.html")
 
-@app.route("/collections", methods=["GET"])
+@app.route("/results")
+def results():
+    filename = request.args.get("filename")
+    return render_template("results.html", filename=filename)
+
+@app.route("/download/<filename>")
+def download_file(filename):
+    path = os.path.join(app.config["OUTPUT_FOLDER"], filename)
+    return send_file(path, as_attachment=True)
+
+@app.route("/collections")
 def list_collections():
     return {"collections": db.list_collection_names()}
 
-@app.route("/predictions/<collection_name>", methods=["GET"])
+@app.route("/predictions/<collection_name>")
 def get_predictions(collection_name):
-    collection = db[collection_name]
-    return list(collection.find({}, {"_id": 0}))
+    return list(db[collection_name].find({}, {"_id": 0}))
 
 if __name__ == "__main__":
     app.run(debug=False)
