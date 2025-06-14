@@ -16,10 +16,11 @@ client = MongoClient(mongo_uri)
 db = client["claims-fraud-db"]
 collection = db["insurance_claims"]
 
-# Define model and feature schema
+# Global model and state
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model_is_trained = False
 
+# Unified feature schema (underscore style)
 features = [
     'age', 'months_as_customer', 'policy_deductable', 'policy_annual_premium',
     'umbrella_limit', 'capital_gains', 'capital_loss', 'incident_hour_of_the_day',
@@ -28,14 +29,14 @@ features = [
 ]
 
 def initialize_model():
-    """Train model if it hasn't been trained yet."""
+    """Ensure the fraud model is trained exactly once."""
     global model_is_trained
     if not model_is_trained:
         train_model()
         model_is_trained = True
 
 def train_model():
-    """Train fraud detection model on stored claims."""
+    """Train the Random Forest classifier on existing MongoDB claims."""
     df = pd.DataFrame(list(collection.find()))
     df.columns = df.columns.str.strip().str.replace("-", "_", regex=False)
 
@@ -60,12 +61,8 @@ def train_model():
     print("✅ Classification Report:")
     print(classification_report(y_test, y_pred))
 
-def store_prediction(data):
-    """Store fraud predictions in MongoDB."""
-    collection.insert_one(data)
-
 def predict_fraud(df):
-    """Predict fraud for uploaded claims and store results."""
+    """Predict fraud probabilities and store results in MongoDB."""
     initialize_model()
 
     df.columns = df.columns.str.strip().str.replace("-", "_", regex=False)
@@ -76,5 +73,5 @@ def predict_fraud(df):
     fraud_probs = model.predict_proba(df[available])[:, 1]
     df["Fraud Probability"] = fraud_probs
 
-    store_prediction(df.to_dict(orient="records"))
+    collection.insert_many(df.to_dict(orient="records"))
     return fraud_probs
