@@ -11,7 +11,7 @@ import seaborn as sns
 # 1. MySQL Connection
 db_config = {
     'user': 'root',
-    'password': '12345',
+    'password': 'mySecretPassword',
     'host': 'localhost',
     'database': 'insurance_data'
 }
