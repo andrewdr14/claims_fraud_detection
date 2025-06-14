@@ -32,7 +32,7 @@ df = df[df['fraud_label'].isin([0, 1])]  # Remove unmapped values
 # 4️⃣ Feature Selection
 features = [
     'age', 'months_as_customer', 'policy_deductable', 'policy_annual_premium',
-    'umbrella_limit', 'capital_gains', 'capital_loss', 'incident_hour_of_the_day',
+    'umbrella_limit', 'capital-gains', 'capital-loss', 'incident_hour_of_the_day',
     'number_of_vehicles_involved', 'bodily_injuries', 'witnesses',
     'total_claim_amount', 'injury_claim', 'property_claim', 'vehicle_claim'
 ]
