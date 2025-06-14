@@ -72,3 +72,23 @@ plt.show()
 sample_claim = np.array([[45, 210, 1000, 1400, 0, 0, 0, 8, 1, 1, 2, 5000, 3000, 1000, 1000]])
 prediction = model.predict(sample_claim)
 print("🔍 Prediction for Sample Claim:", "Fraudulent" if prediction[0] == 1 else "Legitimate")
+
+# 10. Feature Importance Analysis
+importances = model.feature_importances_
+feature_names = X.columns
+importance_df = pd.DataFrame({
+    'Feature': feature_names,
+    'Importance': importances
+}).sort_values(by='Importance', ascending=False)
+
+print("\n🔍 Top Predictive Features:")
+print(importance_df.head(10))
+
+# Optional: Plot Feature Importances
+plt.figure(figsize=(10, 6))
+sns.barplot(x='Importance', y='Feature', data=importance_df.head(10), palette='viridis')
+plt.title("Top 10 Features Predicting Fraud")
+plt.xlabel("Importance Score")
+plt.ylabel("Feature")
+plt.tight_layout()
+plt.show()
