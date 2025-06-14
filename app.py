@@ -6,13 +6,13 @@ import model
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
-# Load environment & connect to Mongo
+# Load environment variables
 load_dotenv()
 mongo_uri = os.getenv("MONGO_URI")
 client = MongoClient(mongo_uri)
 db = client["claims-fraud-db"]
-collection = db["insurance_claims"]
 
+# Flask config
 app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 ALLOWED_EXTENSIONS = {"csv"}
@@ -31,21 +31,34 @@ def upload_file():
             filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
             file.save(filepath)
 
+            # Load uploaded file
             df = pd.read_csv(filepath)
+
+            # Train model (only once)
+            model.initialize_model(df)
+
+            # Get fraud probabilities
             enriched_df = model.predict_fraud(df)
 
-            if not enriched_df.empty:
-                collection.insert_many(enriched_df.to_dict(orient="records"))
+            # Store in a collection named after the file (excluding extension)
+            collection_name = os.path.splitext(filename)[0]
+            file_collection = db[collection_name]
+            file_collection.insert_many(enriched_df.to_dict(orient="records"))
 
             return jsonify({
-                "message": "Predictions stored in MongoDB",
+                "message": f"Stored in MongoDB collection '{collection_name}'",
                 "data": enriched_df.to_dict(orient="records")
             })
 
     return render_template("index.html")
 
-@app.route("/predictions", methods=["GET"])
-def get_predictions():
+@app.route("/collections", methods=["GET"])
+def list_collections():
+    return jsonify({"collections": db.list_collection_names()})
+
+@app.route("/predictions/<collection_name>", methods=["GET"])
+def get_predictions(collection_name):
+    collection = db[collection_name]
     return jsonify(list(collection.find({}, {"_id": 0})))
 
 if __name__ == "__main__":
