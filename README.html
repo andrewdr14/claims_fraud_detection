@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claims Fraud Detection System</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h1, h2 { color: #2c3e50; }
+        code { background: #f4f4f4; padding: 4px; display: block; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+    <h1>Claims Fraud Detection System</h1>
+    <p>This Python-MySQL-based system detects fraudulent insurance claims using rule-based logic and machine learning models.</p>
+
+    <h2>Installation & Setup</h2>
+    <p>To install dependencies, run the following:</p>
+    <code>pip install pandas numpy scikit-learn sqlalchemy pymysql flask</code>
+
+    <h2>Database Schema</h2>
+    <table>
+        <tr>
+            <th>Column</th>
+            <th>Type</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>claim_id</td>
+            <td>INT (Primary Key)</td>
+            <td>Unique claim identifier</td>
+        </tr>
+        <tr>
+            <td>claim_amount</td>
+            <td>DECIMAL(10,2)</td>
+            <td>Amount claimed</td>
+        </tr>
+    </table>
+
+    <h2>Fraud Detection Logic</h2>
+    <code>
+    def detect_fraud(claim_amount, claim_history_count):
+        return claim_amount > 10000 or claim_history_count > 5
+    </code>
+
+    <h2>API Usage</h2>
+    <p>Run the Flask API:</p>
+    <code>python flask_app.py</code>
+
+    <h2>License</h2>
+    <p>This project is licensed under MIT.</p>
+</body>
+</html>
+
+
+
+
+
