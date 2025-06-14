@@ -1,9 +1,22 @@
 import os
 import pandas as pd
 import numpy as np
-from flask import Flask, request, render_template, send_file
+from flask import Flask, request, render_template, jsonify
 from werkzeug.utils import secure_filename
 import model  # Import the entire module
+from pymongo import MongoClient
+from dotenv import load_dotenv
+
+# 1️⃣ Load Environment Variables
+load_dotenv()
+
+# 2️⃣ Get MongoDB URI from Environment Variables
+mongo_uri = os.getenv("MONGO_URI")  # Ensure this is correctly set in Render
+
+# 3️⃣ Connect to MongoDB Atlas
+client = MongoClient(mongo_uri)
+db = client["claims-fraud-db"]  # Use the correct database name
+collection = db["insurance_claims"]  # Use the correct collection name
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
@@ -30,18 +43,23 @@ def upload_file():
 
             # Process dataset
             df = pd.read_csv(filepath)
-            fraud_probs = model.predict_fraud(df)  # Corrected function call
+            fraud_probs = model.predict_fraud(df)  # Get fraud probabilities
 
             # Add probabilities to dataset
             df["Fraud Probability"] = fraud_probs
 
-            # Save processed file
-            output_filepath = os.path.join(app.config["UPLOAD_FOLDER"], "processed_" + filename)
-            df.to_csv(output_filepath, index=False)
+            # Store predictions in MongoDB
+            collection.insert_many(df.to_dict(orient="records"))
 
-            return send_file(output_filepath, as_attachment=True)
+            return jsonify({"message": "Predictions stored in MongoDB", "data": df.to_dict(orient="records")})
 
     return render_template("index.html")
+
+@app.route("/predictions", methods=["GET"])
+def get_predictions():
+    """Retrieve stored fraud predictions from MongoDB."""
+    predictions = list(collection.find({}, {"_id": 0}))  # Exclude MongoDB's default `_id` field
+    return jsonify(predictions)
 
 if __name__ == "__main__":
     import sys
