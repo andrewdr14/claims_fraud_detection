@@ -1,13 +1,13 @@
 # 🚀 Insurance Fraud Detection Project  
 
 ## 📌 Overview  
-This project leverages **machine learning** and **web-based tools** to detect fraudulent insurance claims. Built with **Python, MongoDB, Flask**, and hosted on **Render**, the system allows users to upload claim data, predict fraud probabilities, and download fraud probabilities for each claim.
+This project uses **machine learning** and **web-based tools** to detect fraudulent insurance claims. Built with **Python, MongoDB, Flask**, and hosted on **Render**, the system allows users to upload claim data, predict fraud probabilities, and download fraud probabilities for each claim.
 
 ## 🎯 Features  
 ✅ **Customizable Data Upload** – Users select available claim data and generate a custom template.  
-✅ **Machine Learning-Based Fraud Detection** – Trained **Random Forest classifier** dynamically adjusts to available features.  
+✅ **Machine Learning-Based Fraud Detection** – Trained **Random Forest classifier** adjusts to available features.  
 ✅ **Flexible File Support** – Accepts both `.csv` and `.xlsx` uploads.  
-✅ **MongoDB Integration** – Stores enriched claim datasets with fraud probabilities.  
+✅ **MongoDB Integration** – Stores claim datasets with fraud probabilities.  
 ✅ **Dynamic Model Training** – Adapts predictions based on provided inputs.  
 ✅ **Automated Versioning** – Prevents duplicate uploads by creating uniquely named datasets.
 
@@ -32,10 +32,6 @@ Run Flask locally:
 ```bash
 python app.py
 ```
-Access the web interface at:  
-```
-http://127.0.0.1:5000
-```
 
 ## 📂 Project Structure  
 ```
@@ -59,7 +55,7 @@ Users fill in the spreadsheet and upload it via the web interface.
 The machine learning model analyzes each claim, appends **Fraud Probability**, and stores results in MongoDB.  
 
 4️⃣ **Download Enriched Results**  
-Users receive an enriched dataset with fraud probabilities appended.
+Users receive a dataset with fraud probabilities appended to each claim.
 
 ## 🎯 Next Steps  
 ✔ **Improve Model Accuracy with Larger Datasets**  
