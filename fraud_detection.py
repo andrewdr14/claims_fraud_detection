@@ -10,8 +10,8 @@ import seaborn as sns
 
 # 1. MySQL Connection
 db_config = {
-    'user': 'root',
-    'password': 'mySecretPassword',
+    'user': 'user',
+    'password': 'password',
     'host': 'localhost',
     'database': 'insurance_data'
 }
