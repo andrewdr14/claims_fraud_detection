@@ -1,7 +1,7 @@
 # 🚀 Insurance Fraud Detection Project  
 
 ## 📌 Overview  
-This project leverages **machine learning** and **web-based tools** to detect fraudulent insurance claims. Built with **Python, MongoDB, Flask**, and hosted on **Render**, the system allows users to upload claim data, dynamically predict fraud probabilities, and download enriched datasets.
+This project leverages **machine learning** and **web-based tools** to detect fraudulent insurance claims. Built with **Python, MongoDB, Flask**, and hosted on **Render**, the system allows users to upload claim data, predict fraud probabilities, and download fraud probabilities for each claim.
 
 ## 🎯 Features  
 ✅ **Customizable Data Upload** – Users select available claim data and generate a custom template.  
