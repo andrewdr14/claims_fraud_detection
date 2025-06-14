@@ -1,67 +1,74 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+import pymysql
+from sqlalchemy import create_engine
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-# Step 1: Generate Sample Data
-np.random.seed(42)
-data = {
-    'claim_amount': np.random.randint(500, 20000, 500),
-    'claim_history_count': np.random.randint(0, 10, 500),
-    'customer_age': np.random.randint(18, 80, 500),
-    'fraud_reported': np.random.choice([0, 1], size=500, p=[0.85, 0.15])  # 15% fraud cases
+# 1. MySQL Connection
+db_config = {
+    'user': 'root',
+    'password': '12345',
+    'host': 'localhost',
+    'database': 'insurance_data'
 }
 
-df = pd.DataFrame(data)
+engine = create_engine(
+    f"mysql+pymysql://{db_config['user']}:{db_config['password']}@{db_config['host']}/{db_config['database']}"
+)
 
-# Step 2: Visualize Data Distribution
-plt.figure(figsize=(12, 5))
-sns.histplot(df['claim_amount'], bins=30, kde=True, color='blue')
-plt.title('Distribution of Claim Amounts')
-plt.xlabel('Claim Amount')
-plt.ylabel('Frequency')
-plt.show()
+# 2. Load Data
+df = pd.read_sql("SELECT * FROM insurance_claims", con=engine)
 
-plt.figure(figsize=(6, 5))
-sns.countplot(x='fraud_reported', data=df, palette='Set1')
-plt.title('Fraud vs. Non-Fraud Cases')
-plt.xlabel('Fraud Reported')
-plt.ylabel('Count')
-plt.xticks(ticks=[0, 1], labels=['No Fraud', 'Fraud'])
-plt.show()
+# 3. Clean and Preprocess
+df['fraud_reported'] = df['fraud_reported'].astype(str).str.upper().str.strip()
+df['fraud_label'] = df['fraud_reported'].map({'Y': 1, 'N': 0, 'YES': 1, 'NO': 0})
+df = df[df['fraud_label'].isin([0, 1])]  # Drop anything unmapped
 
-# Step 3: Split Data for Training & Testing
-X = df[['claim_amount', 'claim_history_count', 'customer_age']]
-y = df['fraud_reported']
+# 4. Feature Selection
+features = [
+    'age', 'months_as_customer', 'policy_deductable', 'policy_annual_premium',
+    'umbrella_limit', 'capital_gains', 'capital_loss', 'incident_hour_of_the_day',
+    'number_of_vehicles_involved', 'bodily_injuries', 'witnesses',
+    'total_claim_amount', 'injury_claim', 'property_claim', 'vehicle_claim'
+]
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+df[features] = df[features].apply(pd.to_numeric, errors='coerce')
+df.dropna(subset=features, inplace=True)
 
-# Step 4: Build the Fraud Detection Model
+X = df[features]
+y = df['fraud_label']
+
+# 5. Train/Test Split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, stratify=y, test_size=0.25, random_state=42
+)
+
+# 6. Train Model
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
-# Step 5: Evaluate Model Performance
+# 7. Evaluate
 y_pred = model.predict(X_test)
-accuracy = accuracy_score(y_test, y_pred)
-print(f'Model Accuracy: {accuracy:.2f}')
+print("✅ Classification Report:")
+print(classification_report(y_test, y_pred))
 
-# Step 6: Confusion Matrix Visualization
+# 8. Confusion Matrix Plot
 conf_matrix = confusion_matrix(y_test, y_pred)
-
 plt.figure(figsize=(5, 4))
 sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues')
-plt.title('Confusion Matrix')
-plt.xlabel('Predicted')
-plt.ylabel('Actual')
-plt.xticks(ticks=[0.5, 1.5], labels=['No Fraud', 'Fraud'])
-plt.yticks(ticks=[0.5, 1.5], labels=['No Fraud', 'Fraud'])
+plt.title("Fraud Detection: Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.xticks([0.5, 1.5], ['No Fraud', 'Fraud'])
+plt.yticks([0.5, 1.5], ['No Fraud', 'Fraud'])
+plt.tight_layout()
 plt.show()
 
-# Step 7: Test Model with a Sample Claim
-sample_claim = np.array([[12000, 3, 45]])  # Claim Amount: £12,000, Past Claims: 3, Age: 45
-fraud_prediction = model.predict(sample_claim)
-
-print("Fraud Detected" if fraud_prediction[0] == 1 else "No Fraud Detected")
+# 9. New Claim Prediction
+sample_claim = np.array([[45, 210, 1000, 1400, 0, 0, 0, 8, 1, 1, 2, 5000, 3000, 1000, 1000]])
+prediction = model.predict(sample_claim)
+print("🔍 Prediction for Sample Claim:", "Fraudulent" if prediction[0] == 1 else "Legitimate")
