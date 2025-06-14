@@ -37,6 +37,7 @@ features = [
     'total_claim_amount', 'injury_claim', 'property_claim', 'vehicle_claim'
 ]
 
+
 df[features] = df[features].apply(pd.to_numeric, errors='coerce')
 df.dropna(subset=features, inplace=True)
 
