@@ -53,7 +53,7 @@ def generate_template():
     selected = request.form.getlist("features")
     if not selected:
         return "Please select at least one feature", 400
-    df = pd.DataFrame(columns=selected + ["fraud_reported"])  # Include fraud_reported for training
+    df = pd.DataFrame(columns=selected)  # Include fraud_reported for training
     template_name = "custom_template.xlsx"
     template_path = os.path.join(TEMPLATE_FOLDER, template_name)
     df.to_excel(template_path, index=False)
