@@ -1,76 +1,60 @@
-import pandas as pd
-import numpy as np
 import os
+import joblib
+import numpy as np
+import pandas as pd
 from pymongo import MongoClient
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
 from dotenv import load_dotenv
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
+from sklearn.model_selection import train_test_split
 
 # Load environment variables
 load_dotenv()
 mongo_uri = os.getenv("MONGO_URI")
-
-# Connect to MongoDB Atlas
 client = MongoClient(mongo_uri)
-db = client["claims-fraud-db"]
-collection = db["motor_insurance_claims"]
 
-# Initialize model
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-model_is_trained = False
-trained_features = []
+# Initialize models
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+xgb_model = XGBClassifier(n_estimators=100, use_label_encoder=False, eval_metric="logloss")
 
+# Function to fetch and clean data
 def fetch_data():
-    """Retrieve claim data from MongoDB Atlas."""
-    data = list(collection.find({}, {"_id": 0}))  # Exclude MongoDB's _id field
-    return pd.DataFrame(data)
+    db = client["claims-fraud-db"]
+    collection = db["motor_insurance_claims"]
+    df = pd.DataFrame(list(collection.find()))
+    return df
 
-def initialize_model():
-    """Train model using data from MongoDB."""
-    global model_is_trained, trained_features
+# Function to preprocess data and train both models
+def initialize_models():
+    global trained_features
+
     df = fetch_data()
-    df = _clean_columns(df)
-
+    df["fraud_reported"] = df["fraud_reported"].astype(str).str.strip().str.capitalize()
     label_map = {"Yes": 1, "No": 0}
     df["fraud_label"] = df["fraud_reported"].map(label_map)
 
-    df = df[df["fraud_label"].isin([0, 1])]
-    df.dropna(axis=1, how="all", inplace=True)
+    # Remove unnecessary columns
+    df.drop(["umbrella_limit", "incident_hour_of_the_day", "number_of_vehicles", "fraud_label"], axis=1, inplace=True, errors="ignore")
 
     available = df.select_dtypes(include=[np.number]).columns.tolist()
-    available.remove("fraud_label")
-
-    df[available] = df[available].apply(pd.to_numeric, errors="coerce")
-    df.dropna(subset=available, inplace=True)
-
     trained_features = available
 
-    X, y = df[trained_features], df["fraud_label"]
+    X, y = df[trained_features], df["fraud_reported"].map(label_map)
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
 
-    model.fit(X_train, y_train)
-    model_is_trained = True
+    rf_model.fit(X_train, y_train)
+    xgb_model.fit(X_train, y_train)
 
-    # ✅ Only print final model results (no debugging information)
-    print(classification_report(y_test, model.predict(X_test)))
+    # Save trained models
+    joblib.dump(rf_model, "random_forest.pkl")
+    joblib.dump(xgb_model, "xgboost.pkl")
 
-def predict_fraud():
-    """Score new claims using the trained model."""
-    df = fetch_data()
-    df = _clean_columns(df)
+    print("✅ Models trained and saved!")
 
-    df[trained_features] = df[trained_features].apply(pd.to_numeric, errors="coerce")
-    df.dropna(subset=trained_features, inplace=True)
-
-    df["Fraud Probability"] = model.predict_proba(df[trained_features])[:, 1]
-    return df
-
-def _clean_columns(df):
-    """Clean column names for consistency."""
-    df.columns = df.columns.str.strip().str.replace("-", "_", regex=False)
-    return df
-
-# Execute model training
-if __name__ == "__main__":
-    initialize_model()
+# Load pre-trained models if available
+if os.path.exists("random_forest.pkl") and os.path.exists("xgboost.pkl"):
+    rf_model = joblib.load("random_forest.pkl")
+    xgb_model = joblib.load("xgboost.pkl")
+    print("✅ Pre-trained models loaded successfully!")
+else:
+    initialize_models()
