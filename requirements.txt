@@ -12,3 +12,4 @@ gunicorn
 pymongo
 openpyxl
 xgboost
+faker
