@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import joblib
 from flask import Flask, render_template, send_file
 from pymongo import MongoClient
 from dotenv import load_dotenv
@@ -13,13 +14,16 @@ client = MongoClient(mongo_uri)
 
 app = Flask(__name__)
 
+# Load pre-trained fraud detection model
+if os.path.exists("fraud_model.pkl"):
+    model.model = joblib.load("fraud_model.pkl")
+    print("✅ Pre-trained model loaded successfully!")
+
 @app.route("/")
 def evaluation():
-    """Run model evaluation dynamically and display results."""
-    model.initialize_model()  # Train model using MongoDB data
+    """Run fraud model evaluation and display results."""
     df = model.fetch_data()  # Load claims data
 
-    # Ensure fraud_label exists before using it
     df["fraud_reported"] = df["fraud_reported"].astype(str).str.strip().str.capitalize()
     label_map = {"Yes": 1, "No": 0}
     df["fraud_label"] = df["fraud_reported"].map(label_map)
@@ -47,5 +51,5 @@ def download_data():
 
 if __name__ == "__main__":
     # Dynamically assign Render's port for deployment
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
