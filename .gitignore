@@ -1,3 +1,5 @@
 .env.env
 .env
 *.pkl
+random_forest.pkl
+xgboost.pkl
