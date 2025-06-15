@@ -1,5 +1,5 @@
 .env.env
 .env
 *.pkl
-__pycache__
+__pycache__/
 
