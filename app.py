@@ -1,11 +1,10 @@
 import os
 import pandas as pd
-from flask import Flask, render_template
+from flask import Flask, render_template, send_file
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from sklearn.metrics import classification_report
 import model  # Import fraud detection model
-from flask import send_file  # Import send_file for CSV download
 
 # Load environment variables
 load_dotenv()
@@ -13,8 +12,6 @@ mongo_uri = os.getenv("MONGO_URI")
 client = MongoClient(mongo_uri)
 
 app = Flask(__name__)
-
-
 
 @app.route("/")
 def evaluation():
@@ -49,4 +46,4 @@ def download_data():
     return send_file("motor_insurance_claims.csv", as_attachment=True)
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(host="0.0.0.0", port=10000, debug=False)
