@@ -35,8 +35,6 @@ cd claims-fraud-detection
 ### 2. Set up Python environment
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -82,15 +80,6 @@ Visit `http://localhost:8080` in your browser to see the dashboard.
 - pandas, numpy, scikit-learn, xgboost
 - pymongo, python-dotenv, joblib, Faker
 
-Install all dependencies with:
-
-```bash
-pip install -r requirements.txt
-```
-
-## Deployment
-
-The app is Render/Heroku-ready: it uses the `PORT` environment variable if set.
 
 ## Notes & Recommendations
 
