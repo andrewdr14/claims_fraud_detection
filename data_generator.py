@@ -3,6 +3,10 @@ import random
 from faker import Faker
 from pymongo import MongoClient
 import os
+from dotenv import load_dotenv  # <-- Add this line
+
+# Load environment variables from .env file
+load_dotenv()  # <-- Add this line
 
 # Initialize Faker for realistic data
 fake = Faker()
@@ -32,13 +36,21 @@ def generate_claim_data(n=5000):
 def store_data_in_mongodb(df):
     """Store generated data into MongoDB Atlas."""
     mongo_uri = os.getenv("MONGO_URI")  # Ensure environment variable is set
-    client = MongoClient(mongo_uri)
-    db = client["claims-fraud-db"]
-    collection = db["motor_insurance_claims"]
+    print("MONGO_URI is:", mongo_uri)   # Debug: Show the URI being used
 
-    # Insert data into MongoDB
-    collection.insert_many(df.to_dict(orient="records"))
-    print("✅ Data successfully stored in MongoDB Atlas")
+    if not mongo_uri:
+        raise ValueError("MONGO_URI environment variable not set. Please check your .env file.")
+
+    try:
+        client = MongoClient(mongo_uri)
+        db = client["claims-fraud-db"]
+        collection = db["motor_insurance_claims"]
+
+        # Insert data into MongoDB
+        collection.insert_many(df.to_dict(orient="records"))
+        print("✅ Data successfully stored in MongoDB Atlas")
+    except Exception as e:
+        print("❌ Failed to store data in MongoDB Atlas:", e)
 
 if __name__ == "__main__":
     # Generate dataset
