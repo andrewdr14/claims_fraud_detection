@@ -26,7 +26,7 @@ This project demonstrates how to:
 
 Clone the repository:
 
-On a CLI: git clone https://github.com/<your-username>/claims-fraud-detection.git
+On a CLI: git clone https://github.com/andrewdr14/claims-fraud-detection.git
 
 On a CLI: cd claims-fraud-detection
 
@@ -42,12 +42,12 @@ This project uses MongoDB to store and retrieve data.
 
 Create a `.env` file in the project root (do not commit this file) and add your MongoDB URI:
 
-MONGO_URI=<your-mongodb-connection-string>
+MONGO_URI=your-mongodb-connection-string
 
 
 ### 3. Generate the Data
 
-Run the data generator script to create or update the dataset (e.g., `motor_insurance_claims.csv`):
+Run the data generator script to create or update the dataset:
 
 On a CLI: python data_generator.py
 
