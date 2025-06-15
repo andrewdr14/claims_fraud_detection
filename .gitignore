@@ -3,3 +3,5 @@
 *.pkl
 random_forest.pkl
 xgboost.pkl
+*.pkl
+*.pkl
