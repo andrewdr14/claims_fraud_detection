@@ -48,4 +48,3 @@ if __name__ == "__main__":
 
     # Store in MongoDB
     store_data_in_mongodb(df)
-
