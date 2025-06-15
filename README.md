@@ -27,6 +27,7 @@ This project demonstrates how to:
 Clone the repository:
 
 On a CLI: git clone https://github.com/<your-username>/claims-fraud-detection.git
+
 On a CLI: cd claims-fraud-detection
 
 
@@ -69,7 +70,7 @@ Start the Flask web interface:
 
 On a CLI: python app.py
 
-Once running, your terminal will display a local URL (e.g., `http://127.0.0.1:8080/`). Open this URL in your browser to:
+Once running, your terminal will display a local URL. Open this URL in your browser to:
 - View the fraud detection analysis.
 - Compare model performance (Random Forest vs. XGBoost).
 - Review statistical analyses (policy holder counts; min, max, median, mean, standard deviation for key features).
