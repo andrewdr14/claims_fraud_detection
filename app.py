@@ -1,6 +1,6 @@
 import os
-import pandas as pd
 import joblib
+import pandas as pd
 from flask import Flask, render_template, send_file
 from pymongo import MongoClient
 from dotenv import load_dotenv
@@ -17,11 +17,20 @@ app = Flask(__name__)
 # Load pre-trained fraud detection model
 if os.path.exists("fraud_model.pkl"):
     model.model = joblib.load("fraud_model.pkl")
+    model_is_trained = True
     print("✅ Pre-trained model loaded successfully!")
+else:
+    model.initialize_model()
+    joblib.dump(model.model, "fraud_model.pkl")
+    model_is_trained = True
+    print("✅ Model trained and saved!")
 
 @app.route("/")
 def evaluation():
     """Run fraud model evaluation and display results."""
+    if not model_is_trained:
+        return "🚨 Error: Model is not trained! Please retrain the model first.", 500
+
     df = model.fetch_data()  # Load claims data
 
     df["fraud_reported"] = df["fraud_reported"].astype(str).str.strip().str.capitalize()
