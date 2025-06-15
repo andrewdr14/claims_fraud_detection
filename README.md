@@ -151,12 +151,3 @@ pip install -r requirements.txt
 - For production, secure your Flask app and never commit your `.env` or credentials.
 
 ---
-
-## License
-
-[Specify your license here, e.g., MIT]
-
----
-
-**Contributors:**  
-Andrew Dr, et al.
