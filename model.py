@@ -17,16 +17,19 @@ client = MongoClient(mongo_uri)
 rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
 xgb_model = XGBClassifier(n_estimators=100, use_label_encoder=False, eval_metric="logloss")
 
+# Declare trained_features globally
+trained_features = []
+
 # Function to fetch and clean data
 def fetch_data():
     db = client["claims-fraud-db"]
     collection = db["motor_insurance_claims"]
-    df = pd.DataFrame(list(collection.find()))
+    df = pd.DataFrame(list(collection.find({}, {"_id": 0})))  # Exclude `_id` for cleaner output
     return df
 
 # Function to preprocess data and train both models
 def initialize_models():
-    global trained_features
+    global trained_features  # Ensure it's accessible
 
     df = fetch_data()
     df["fraud_reported"] = df["fraud_reported"].astype(str).str.strip().str.capitalize()
@@ -36,8 +39,7 @@ def initialize_models():
     # Remove unnecessary columns
     df.drop(["umbrella_limit", "incident_hour_of_the_day", "number_of_vehicles", "fraud_label"], axis=1, inplace=True, errors="ignore")
 
-    available = df.select_dtypes(include=[np.number]).columns.tolist()
-    trained_features = available
+    trained_features = df.select_dtypes(include=[np.number]).columns.tolist()
 
     X, y = df[trained_features], df["fraud_reported"].map(label_map)
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)

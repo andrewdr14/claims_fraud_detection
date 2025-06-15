@@ -4,8 +4,8 @@ import pandas as pd
 from flask import Flask, render_template, send_file
 from pymongo import MongoClient
 from dotenv import load_dotenv
+import model  # Import trained models
 from sklearn.metrics import classification_report
-import model  # Import fraud detection model
 
 # Load environment variables
 load_dotenv()
@@ -14,23 +14,17 @@ client = MongoClient(mongo_uri)
 
 app = Flask(__name__)
 
-# Load pre-trained fraud detection model
-if os.path.exists("fraud_model.pkl"):
-    model.model = joblib.load("fraud_model.pkl")
-    model_is_trained = True
-    print("✅ Pre-trained model loaded successfully!")
-else:
-    model.initialize_model()
-    joblib.dump(model.model, "fraud_model.pkl")
-    model_is_trained = True
-    print("✅ Model trained and saved!")
+# Ensure models are initialized before accessing features
+model.initialize_models()
+trained_features = model.trained_features
+
+# Load pre-trained models
+rf_model = joblib.load("random_forest.pkl")
+xgb_model = joblib.load("xgboost.pkl")
 
 @app.route("/")
 def evaluation():
     """Run fraud model evaluation and display results."""
-    if not model_is_trained:
-        return "🚨 Error: Model is not trained! Please retrain the model first.", 500
-
     df = model.fetch_data()  # Load claims data
 
     df["fraud_reported"] = df["fraud_reported"].astype(str).str.strip().str.capitalize()
@@ -38,18 +32,40 @@ def evaluation():
     df["fraud_label"] = df["fraud_reported"].map(label_map)
 
     y_true = df["fraud_label"]
-    y_pred = model.model.predict(df[model.trained_features])
+    y_pred_rf = rf_model.predict(df[trained_features])
+    y_pred_xgb = xgb_model.predict(df[trained_features])
 
-    # Generate classification report dynamically
-    evaluation_results = classification_report(y_true, y_pred, output_dict=True)
+    # Generate classification reports dynamically
+    rf_results = classification_report(y_true, y_pred_rf, output_dict=True)
+    xgb_results = classification_report(y_true, y_pred_xgb, output_dict=True)
 
     # Generate summary statistics
-    summary_stats = df.describe().to_dict()
+    policy_holder_count = len(df)
+    fraud_cases = (df["fraud_reported"] == "Yes").sum()
+    non_fraud_cases = (df["fraud_reported"] == "No").sum()
+
+    # Compute descriptive statistics for numeric columns (excluding specific ones)
+    excluded_columns = ["umbrella_limit", "incident_hour_of_the_day", "number_of_vehicles", "fraud_label"]
+    numeric_cols = [col for col in trained_features if col not in excluded_columns]
+
+    summary_stats = {
+        "Total Policy Holders": policy_holder_count,
+        "Fraud Reported": fraud_cases,
+        "No Fraud Reported": non_fraud_cases
+    }
+
+    # Add detailed statistics (Max, Min, Mean, Median, Std Dev)
+    for col in numeric_cols:
+        summary_stats[f"{col} - Min"] = df[col].min()
+        summary_stats[f"{col} - Max"] = df[col].max()
+        summary_stats[f"{col} - Mean"] = round(df[col].mean(), 2)
+        summary_stats[f"{col} - Median"] = df[col].median()
+        summary_stats[f"{col} - Std Dev"] = round(df[col].std(), 2)
 
     return render_template(
         "results.html",
-        features=model.trained_features,
-        evaluation_results=evaluation_results,
+        rf_results=rf_results,
+        xgb_results=xgb_results,
         summary_stats=summary_stats
     )
 

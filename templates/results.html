@@ -3,23 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fraud Detection Results</title>
+    <title>Motor Insurance Fraud Detection</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 20px;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+        }
+        .intro {
+            padding: 15px;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
 <body>
     <header>
         <h1>Motor Insurance Fraud Detection</h1>
     </header>
 
-    <section>
-        <h2>📊 Summary Statistics</h2>
-        <p><strong>Total Policy Holders:</strong> {{ summary_stats["Total Policy Holders"] }}</p>
-        <p><strong>Fraud Reported:</strong> {{ summary_stats["Fraud Reported"] }}</p>
-        <p><strong>No Fraud Reported:</strong> {{ summary_stats["No Fraud Reported"] }}</p>
+    <section class="intro">
+        <h2>🔍 Project Overview</h2>
+        <p>This tool is designed to analyze insurance claims and detect potential fraud using machine learning models. 
+        It compares the performance of <strong>Random Forest</strong> and <strong>XGBoost</strong> classifiers in identifying fraudulent claims based on structured data.</p>
     </section>
 
     <section>
-        <h2>🛡 Random Forest Results</h2>
+        <h2>📊 Policy Holder Statistics</h2>
+        <table>
+            <tr>
+                <th>Statistic</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>Total Policy Holders</td>
+                <td>{{ summary_stats["Total Policy Holders"] }}</td>
+            </tr>
+            <tr>
+                <td>Fraud Reported</td>
+                <td>{{ summary_stats["Fraud Reported"] }}</td>
+            </tr>
+            <tr>
+                <td>No Fraud Reported</td>
+                <td>{{ summary_stats["No Fraud Reported"] }}</td>
+            </tr>
+        </table>
+    </section>
+
+    <section>
+        <h2>📈 Statistical Analysis</h2>
+        <table>
+            <tr>
+                <th>Feature</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Median</th>
+                <th>Mean</th>
+                <th>Std Dev</th>
+            </tr>
+            {% for feature in summary_stats.keys() if "Min" in feature %}
+            <tr>
+                <td>{{ feature.split(" - ")[0] }}</td>
+                <td>{{ summary_stats[feature] }}</td>
+                <td>{{ summary_stats[feature.replace("Min", "Max")] }}</td>
+                <td>{{ summary_stats[feature.replace("Min", "Median")] }}</td>
+                <td>{{ summary_stats[feature.replace("Min", "Mean")] }}</td>
+                <td>{{ summary_stats[feature.replace("Min", "Std Dev")] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </section>
+
+    <section>
+        <h2>🛡 Model Evaluation Metrics</h2>
+        <p><strong>Precision:</strong> Measures the percentage of fraudulent claims correctly identified among all claims flagged as fraud.</p>
+        <p><strong>Recall:</strong> Indicates how many actual fraudulent claims were successfully detected.</p>
+        <p><strong>F1-Score:</strong> A balance between precision and recall, providing an overall measure of model accuracy.</p>
+    </section>
+
+    <section>
+        <h2>🛡 Random Forest Evaluation</h2>
         <table>
             <tr>
                 <th>Metric</th>
@@ -28,32 +118,20 @@
                 <th>Macro Avg</th>
                 <th>Weighted Avg</th>
             </tr>
+            {% for metric in ["precision", "recall", "f1-score"] %}
             <tr>
-                <td>Precision</td>
-                <td>{{ rf_results["0"]["precision"] | round(2) }}</td>
-                <td>{{ rf_results["1"]["precision"] | round(2) }}</td>
-                <td>{{ rf_results["macro avg"]["precision"] | round(2) }}</td>
-                <td>{{ rf_results["weighted avg"]["precision"] | round(2) }}</td>
+                <td>{{ metric.capitalize() }}</td>
+                <td>{{ "%.2f"|format(rf_results["0"][metric]) }}</td>
+                <td>{{ "%.2f"|format(rf_results["1"][metric]) }}</td>
+                <td>{{ "%.2f"|format(rf_results["macro avg"][metric]) }}</td>
+                <td>{{ "%.2f"|format(rf_results["weighted avg"][metric]) }}</td>
             </tr>
-            <tr>
-                <td>Recall</td>
-                <td>{{ rf_results["0"]["recall"] | round(2) }}</td>
-                <td>{{ rf_results["1"]["recall"] | round(2) }}</td>
-                <td>{{ rf_results["macro avg"]["recall"] | round(2) }}</td>
-                <td>{{ rf_results["weighted avg"]["recall"] | round(2) }}</td>
-            </tr>
-            <tr>
-                <td>F1-Score</td>
-                <td>{{ rf_results["0"]["f1-score"] | round(2) }}</td>
-                <td>{{ rf_results["1"]["f1-score"] | round(2) }}</td>
-                <td>{{ rf_results["macro avg"]["f1-score"] | round(2) }}</td>
-                <td>{{ rf_results["weighted avg"]["f1-score"] | round(2) }}</td>
-            </tr>
+            {% endfor %}
         </table>
     </section>
 
     <section>
-        <h2>⚡ XGBoost Results</h2>
+        <h2>⚡ XGBoost Evaluation</h2>
         <table>
             <tr>
                 <th>Metric</th>
@@ -62,32 +140,26 @@
                 <th>Macro Avg</th>
                 <th>Weighted Avg</th>
             </tr>
+            {% for metric in ["precision", "recall", "f1-score"] %}
             <tr>
-                <td>Precision</td>
-                <td>{{ xgb_results["0"]["precision"] | round(2) }}</td>
-                <td>{{ xgb_results["1"]["precision"] | round(2) }}</td>
-                <td>{{ xgb_results["macro avg"]["precision"] | round(2) }}</td>
-                <td>{{ xgb_results["weighted avg"]["precision"] | round(2) }}</td>
+                <td>{{ metric.capitalize() }}</td>
+                <td>{{ "%.2f"|format(xgb_results["0"][metric]) }}</td>
+                <td>{{ "%.2f"|format(xgb_results["1"][metric]) }}</td>
+                <td>{{ "%.2f"|format(xgb_results["macro avg"][metric]) }}</td>
+                <td>{{ "%.2f"|format(xgb_results["weighted avg"][metric]) }}</td>
             </tr>
-            <tr>
-                <td>Recall</td>
-                <td>{{ xgb_results["0"]["recall"] | round(2) }}</td>
-                <td>{{ xgb_results["1"]["recall"] | round(2) }}</td>
-                <td>{{ xgb_results["macro avg"]["recall"] | round(2) }}</td>
-                <td>{{ xgb_results["weighted avg"]["recall"] | round(2) }}</td>
-            </tr>
-            <tr>
-                <td>F1-Score</td>
-                <td>{{ xgb_results["0"]["f1-score"] | round(2) }}</td>
-                <td>{{ xgb_results["1"]["f1-score"] | round(2) }}</td>
-                <td>{{ xgb_results["macro avg"]["f1-score"] | round(2) }}</td>
-                <td>{{ xgb_results["weighted avg"]["f1-score"] | round(2) }}</td>
-            </tr>
+            {% endfor %}
         </table>
+    </section>
+
+    <section>
+        <h2>📥 Download Dataset</h2>
+        <p>You can download the processed dataset below:</p>
+        <a href="{{ url_for('download_data') }}" class="btn">Download CSV</a>
     </section>
 
     <footer>
-        <p>&copy; 2025 Fraud Detection System</p>
+        <p>&copy; 2025 Fraud Detection System - Designed for accuracy & transparency</p>
     </footer>
 </body>
 </html>
