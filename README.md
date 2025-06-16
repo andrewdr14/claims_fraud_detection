@@ -67,6 +67,68 @@ This project stores all claim data in a MongoDB Atlas database.
 
 ---
 
+## Project Structure & Running as a Package
+
+This project is now organized as a Python package for better maintainability and scalability.
+
+### Directory Structure
+
+```
+claims-fraud-detection/
+├── claims_fraud/
+│   ├── __init__.py
+│   ├── data_generator.py
+│   ├── model.py
+│   └── app.py
+├── requirements.txt
+├── README.md
+├── .env
+└── ...
+```
+
+### How to Run Each Script
+
+All scripts should be run as **modules** from the project root using the `-m` flag.  
+This ensures relative imports work correctly and keeps your environment clean.
+
+**Step-by-step:**
+
+1. **Generate Data and Upload to MongoDB**
+
+    ```bash
+    python -m claims_fraud.data_generator
+    ```
+
+2. **Train the Models**
+
+    ```bash
+    python -m claims_fraud.model
+    ```
+
+3. **Launch the Web Application**
+
+    ```bash
+    python -m claims_fraud.app
+    ```
+
+The web application will be accessible at [http://localhost:8080](http://localhost:8080).
+
+---
+
+### Notes
+
+- **Do not run the scripts from inside the `claims_fraud/` directory.**  
+  Always run from the root (the directory containing `claims_fraud/`).
+- **Make sure your `.env` file is in the project root.**
+- **All inter-module imports within `claims_fraud/` use relative imports** (e.g., `from . import model`).
+
+---
+
+**Why this structure?**  
+Organizing your code as a package makes it easier to maintain, test, and extend, and is considered best practice for any project beyond a single script.
+
+---
+
 ## Usage: Order of Execution
 
 **You must run the programs in this order:**
@@ -74,7 +136,7 @@ This project stores all claim data in a MongoDB Atlas database.
 1. ### 1. Generate and Upload Data
 
     ```bash
-    python data_generator.py
+    python -m claims_fraud.data_generator
     ```
 
     - This will create synthetic claim data, save it as `motor_insurance_claims.csv`, and upload it to your MongoDB Atlas cluster.
@@ -83,7 +145,7 @@ This project stores all claim data in a MongoDB Atlas database.
 2. ### 2. Train the Models
 
     ```bash
-    python model.py
+    python -m claims_fraud.model
     ```
 
     - This will fetch data from MongoDB, train the RandomForest and XGBoost models, and save them as `random_forest.pkl` and `xgboost.pkl`.
@@ -91,7 +153,7 @@ This project stores all claim data in a MongoDB Atlas database.
 3. ### 3. Run the Web Application
 
     ```bash
-    python app.py
+    python -m claims_fraud.app
     ```
 
     - The app runs a Flask server. Open your browser and go to [http://localhost:8080](http://localhost:8080).
@@ -102,14 +164,17 @@ This project stores all claim data in a MongoDB Atlas database.
 ## Project Structure
 
 ```
-├── app.py                  # Flask web app for evaluation and reporting
-├── data_generator.py       # Synthetic data generator and MongoDB uploader
-├── model.py                # Model training, saving/loading, and database logic
-├── requirements.txt        # Python dependencies
-├── .env                    # Environment variables (do not commit this file)
-├── motor_insurance_claims.csv # Example generated dataset
+├── claims_fraud/
+│   ├── __init__.py
+│   ├── app.py                  # Flask web app for evaluation and reporting
+│   ├── data_generator.py       # Synthetic data generator and MongoDB uploader
+│   ├── model.py                # Model training, saving/loading, and database logic
+├── requirements.txt            # Python dependencies
+├── .env                        # Environment variables (do not commit this file)
+├── motor_insurance_claims.csv  # Example generated dataset
 ├── templates/
-│   └── results.html        # HTML template for results display
+│   └── results.html            # HTML template for results display
+└── README.md
 ```
 
 ---
@@ -131,32 +196,9 @@ This project stores all claim data in a MongoDB Atlas database.
 
 ---
 
-## Dependencies
+## Code Quality
 
-- Flask
-- pandas, numpy, scikit-learn, xgboost
-- pymongo, python-dotenv, joblib, Faker
-
-Install all with:
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## Deployment
-
-- The app uses the `PORT` environment variable if set (for Render/Heroku compatibility).
-- For production, secure your Flask app and never commit your `.env` or credentials.
-
----
-
-## License
-
-[Specify your license here, e.g., MIT]
-
----
-
-**Contributors:**  
-Andrew Dr, et al.
+- **Formatting:** Use [Black](https://black.readthedocs.io/en/stable/) for code formatting:  
+  ```bash
+  black .
+ 
