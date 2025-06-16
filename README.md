@@ -161,13 +161,7 @@ The web application will be accessible at [http://localhost:8080](http://localho
 
 ---
 
-## Code Quality
-
-<<<<<<< HEAD
-- **Formatting:** Use [Black](https://black.readthedocs.io/en/stable/) for code formatting:  
-  ```bash
-  black .
- 
+## Dependencies 
 =======
 - Flask
 - pandas, numpy, scikit-learn, xgboost
