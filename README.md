@@ -162,7 +162,7 @@ The web application will be accessible at [http://localhost:8080](http://localho
 ---
 
 ## Dependencies 
-=======
+
 - Flask
 - pandas, numpy, scikit-learn, xgboost
 - pymongo, python-dotenv, joblib, Faker
