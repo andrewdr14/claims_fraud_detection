@@ -8,12 +8,15 @@ from . import model  # Import trained models
 from sklearn.metrics import classification_report
 from typing import Dict, Any
 
+# Set template_folder to find templates in the project root
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+app = Flask(__name__, template_folder=TEMPLATES_DIR)
+
 # Load environment variables
 load_dotenv()
 mongo_uri = os.getenv("MONGO_URI")
 client = MongoClient(mongo_uri)
-
-app = Flask(__name__)
 
 # Ensure models are initialized before accessing features
 model.initialize_models()
