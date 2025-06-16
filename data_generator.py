@@ -3,16 +3,25 @@ import random
 from faker import Faker
 from pymongo import MongoClient
 import os
-from dotenv import load_dotenv  # <-- Add this line
+from dotenv import load_dotenv
+from typing import Any
 
 # Load environment variables from .env file
-load_dotenv()  # <-- Add this line
+load_dotenv()
 
 # Initialize Faker for realistic data
 fake = Faker()
 
-def generate_claim_data(n=5000):
-    """Generate synthetic motor insurance claims data."""
+def generate_claim_data(n: int = 5000) -> pd.DataFrame:
+    """
+    Generate synthetic motor insurance claims data.
+
+    Args:
+        n (int, optional): Number of samples to generate. Defaults to 5000.
+
+    Returns:
+        pd.DataFrame: DataFrame containing synthetic claim records.
+    """
     data = []
     collision_types = ["Rear-End", "Side Impact", "Front Collision", "Rollover", "Hit & Run"]
 
@@ -33,8 +42,16 @@ def generate_claim_data(n=5000):
 
     return pd.DataFrame(data)
 
-def store_data_in_mongodb(df):
-    """Store generated data into MongoDB Atlas."""
+def store_data_in_mongodb(df: pd.DataFrame) -> None:
+    """
+    Store generated data into MongoDB Atlas.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing the claim data to store.
+
+    Raises:
+        ValueError: If the MONGO_URI environment variable is not set.
+    """
     mongo_uri = os.getenv("MONGO_URI")  # Ensure environment variable is set
     print("MONGO_URI is:", mongo_uri)   # Debug: Show the URI being used
 

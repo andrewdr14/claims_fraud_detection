@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
+from typing import List
 
 # Load environment variables
 load_dotenv()
@@ -18,17 +19,25 @@ rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
 xgb_model = XGBClassifier(n_estimators=100, use_label_encoder=False, eval_metric="logloss")
 
 # Declare trained_features globally
-trained_features = []
+trained_features: List[str] = []
 
-# Function to fetch and clean data
-def fetch_data():
+def fetch_data() -> pd.DataFrame:
+    """
+    Fetch all insurance claim data from MongoDB (excluding _id field).
+
+    Returns:
+        pd.DataFrame: DataFrame containing all claims data from the database.
+    """
     db = client["claims-fraud-db"]
     collection = db["motor_insurance_claims"]
     df = pd.DataFrame(list(collection.find({}, {"_id": 0})))  # Exclude `_id` for cleaner output
     return df
 
-# Function to preprocess data and train both models
-def initialize_models():
+def initialize_models() -> None:
+    """
+    Preprocess data, train RandomForest and XGBoost models, and save the trained models.
+    Also sets the global trained_features list corresponding to the model features.
+    """
     global trained_features  # Ensure it's accessible
 
     df = fetch_data()

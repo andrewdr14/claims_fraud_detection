@@ -6,6 +6,7 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 import model  # Import trained models
 from sklearn.metrics import classification_report
+from typing import Dict, Any
 
 # Load environment variables
 load_dotenv()
@@ -23,8 +24,13 @@ rf_model = joblib.load("random_forest.pkl")
 xgb_model = joblib.load("xgboost.pkl")
 
 @app.route("/")
-def evaluation():
-    """Run fraud model evaluation and display results."""
+def evaluation() -> str:
+    """
+    Run fraud model evaluation and display results.
+
+    Returns:
+        str: Rendered HTML template with evaluation metrics and summary statistics.
+    """
     df = model.fetch_data()  # Load claims data
 
     df["fraud_reported"] = df["fraud_reported"].astype(str).str.strip().str.capitalize()
@@ -48,7 +54,7 @@ def evaluation():
     excluded_columns = ["umbrella_limit", "incident_hour_of_the_day", "number_of_vehicles", "fraud_label"]
     numeric_cols = [col for col in trained_features if col not in excluded_columns]
 
-    summary_stats = {
+    summary_stats: Dict[str, Any] = {
         "Total Policy Holders": policy_holder_count,
         "Fraud Reported": fraud_cases,
         "No Fraud Reported": non_fraud_cases
@@ -70,8 +76,13 @@ def evaluation():
     )
 
 @app.route("/download-data")
-def download_data():
-    """Allow users to download the dataset."""
+def download_data() -> Any:
+    """
+    Allow users to download the dataset.
+
+    Returns:
+        Response: Sends the CSV dataset file as an attachment.
+    """
     return send_file("motor_insurance_claims.csv", as_attachment=True)
 
 if __name__ == "__main__":
