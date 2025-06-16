@@ -1,183 +1,174 @@
-# Claims Fraud Detection
+# Claims Fraud Detection Learning Tool
 
-A data-driven web application that detects and analyzes insurance claim fraud using machine learning models (Random Forest, XGBoost) and MongoDB for data storage. The project provides a Flask-based web interface to evaluate model performance and review fraud statistics.
-
----
-
-## Features
-
-- **Synthetic Data Generation:** Create realistic motor insurance claim datasets with Faker.
-- **Data Storage:** Store and retrieve claim data from MongoDB Atlas.
-- **Model Training:** Train RandomForest and XGBoost classifiers to detect fraud.
-- **Web Dashboard:** Visualize classification metrics and summary statistics via Flask.
-- **Downloadable Data:** Users can download the generated dataset from the web UI.
+This project is designed as an educational resource for understanding and experimenting with machine learning techniques for insurance claims fraud detection. The codebase is modular, with ample opportunity to explore concepts in data science, backend web development, and production data flows.
 
 ---
 
-## Prerequisites
+## Table of Contents
 
-- Python 3.7+
-- MongoDB Atlas account (free tier is sufficient)
-- (Optional) Virtual environment tool (like `venv`)
-
----
-
-## MongoDB Atlas Setup
-
-This project stores all claim data in a MongoDB Atlas database.  
-**You must set up MongoDB Atlas before running the code.**
-
-1. **Sign up / Log in:** Go to [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas).
-2. **Create a Cluster:** Deploy a new free cluster.
-3. **Add Your IP Address:** In "Network Access", add your current IP address.
-4. **Create a Database User:** In "Database Access", add a user with read/write privileges.
-5. **Get Your Connection String:**
-    - In Atlas, click "Connect" > "Connect your application".
-    - Copy the connection string (e.g. `mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/`)
-6. **Set Up the `.env` File:**
-    - In your project root directory, create a file named `.env`.
-    - Add the following line, replacing with your credentials:
-      ```
-      MONGO_URI=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/claims-fraud-db?retryWrites=true&w=majority&appName=<your-app-name>
-      ```
-    - **Note:** Do not wrap the URI in quotes.  
-    - The database (`claims-fraud-db`) and collection (`motor_insurance_claims`) will be created automatically.
+- [Project Overview](#project-overview)
+- [Key Technologies Used](#key-technologies-used)
+- [Theory: RandomForest & XGBoost](#theory-randomforest--xgboost)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Running the Application](#running-the-application)
+- [Running Tests](#running-tests)
+- [Database: MongoDB](#database-mongodb)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## Installation
+## Project Overview
 
-1. **Clone the repository:**
+This repository demonstrates a full workflow for detecting fraudulent insurance claims using machine learning, including:
 
-    ```bash
-    git clone https://github.com/andrewdr14/claims-fraud-detection.git
-    cd claims-fraud-detection
-    ```
+- **Data generation and preprocessing** (with `data_generator.py`)
+- **Model training and evaluation** (with `model.py`)
+- **Web API for fraud prediction** (with `app.py`, using Flask)
+- **Storing and retrieving data via MongoDB**
+- **Unit tests for data generation logic**
 
-2. **Set up Python environment:**
-
-    ```bash
-    pip install -r requirements.txt
-    ```
+It is intended as a **learning tool**, so code and documentation are designed for clarity and exploration.
 
 ---
 
-## Project Structure & Running as a Package
+## Key Technologies Used
 
-This project is now organized as a Python package for better maintainability and scalability.
-
-### Directory Structure
-
-```
-claims-fraud-detection/
-├── claims-fraud/
-│   ├── __init__.py
-│   ├── data_generator.py
-│   ├── model.py
-│   └── app.py
-├── requirements.txt
-├── README.md
-├── .env
-└── ...
-```
-
-### How to Run Each Script
-
-All scripts should be run as **modules** from the project root using the `-m` flag.  
-This ensures relative imports work correctly and keeps your environment clean.
-
-**Step-by-step:**
-
-1. **Generate Data and Upload to MongoDB**
-
-    ```bash
-    python -m claims-fraud.data_generator
-    ```
-    - This will create synthetic claim data, save it as `motor_insurance_claims.csv`, and upload it to your MongoDB Atlas cluster.
-    - If MongoDB is not set up correctly (see above), this step will fail.
-
-2. **Train the Models**
-
-    ```bash
-    python -m claims-fraud.model
-    ```
-
-    - This will fetch data from MongoDB, train the RandomForest and XGBoost models, and save them as `random_forest.pkl` and `xgboost.pkl`.
-
-3. **Launch the Web Application**
-
-    ```bash
-    python -m claims-fraud.app
-    ```
-
-    - The app runs a Flask server. Open your browser and go to [http://localhost:8080](http://localhost:8080).
-    - Here you can view model performance and download the dataset.
-
-The web application will be accessible at [http://localhost:8080](http://localhost:8080).
+- **Python 3.10+**
+- **Flask**: Lightweight web framework for building the API (`app.py`)
+- **MongoDB**: NoSQL database for storing claims data and predictions
+- **pymongo**: Python driver for MongoDB
+- **scikit-learn**: Machine learning models and utilities
+- **xgboost**: Advanced gradient boosting model
+- **pytest**: For running unit tests
 
 ---
 
-### Notes
+## Theory: RandomForest & XGBoost
 
-- **Do not run the scripts from inside the `claims-fraud/` directory.**  
-  Always run from the root (the directory containing `claims-fraud/`).
-- **Make sure your `.env` file is in the project root.**
-- **All inter-module imports within `claims-fraud/` use relative imports** (e.g., `from . import model`).
+### RandomForest
+
+RandomForest is an ensemble machine learning technique that builds multiple decision trees and combines their predictions to improve accuracy and reduce overfitting. Each tree is trained with a random subset of the data and features, making the overall model more robust—especially important in detecting nuanced patterns of fraud.
+
+- **Pros**: Handles non-linear data, reduces overfitting, interpretable feature importance
+- **Cons**: Slower and less interpretable than a single tree
+
+### XGBoost
+
+XGBoost (Extreme Gradient Boosting) is an efficient implementation of gradient-boosted decision trees. It builds trees sequentially, with each new tree focusing on the errors of the previous trees. XGBoost is widely used for its performance, speed, and ability to handle a variety of data types.
+
+- **Pros**: High predictive power, built-in regularization, handles missing data
+- **Cons**: More complex, harder to tune
 
 ---
 
 ## Project Structure
 
 ```
-├── claims-fraud/
+claims_fraud_detection/
+│
+├── claims_fraud/                # Main package with core logic
 │   ├── __init__.py
-│   ├── app.py                  # Flask web app for evaluation and reporting
-│   ├── data_generator.py       # Synthetic data generator and MongoDB uploader
-│   ├── model.py                # Model training, saving/loading, and database logic
-├── requirements.txt            # Python dependencies
-├── .env                        # Environment variables (do not commit this file)
-├── motor_insurance_claims.csv  # Example generated dataset
-├── templates/
-│   └── results.html            # HTML template for results display
-└── README.md
+│   ├── data_generator.py        # Scripts for generating synthetic claims data
+│   ├── model.py                 # Model training, saving, and loading logic
+│   └── ...                      # (other modules)
+├── app.py                       # Flask web API for predictions
+├── requirements.txt             # Python dependencies
+├── tests/                       # Unit tests (currently for data_generator.py)
+│   ├── __init__.py
+│   └── test_data_generator.py
+├── README.md
+└── ...
 ```
 
 ---
 
-## Troubleshooting
+## Installation
 
-- **Cannot connect to MongoDB Atlas:**  
-  - Check that your `.env` file is present and correct.
-  - Ensure your IP is whitelisted in Atlas.
-  - Make sure Atlas user credentials are correct.
-  - The connection string should start with `mongodb+srv://`.
+> **Python 3.10 or 3.11 is strongly recommended.  
+> MongoDB must also be installed and running locally or accessible remotely.**
 
-- **Order matters:**  
-  - If you run `model.py` or `app.py` before `data_generator.py`, there will be no data to train or display!
+1. **Clone the repository:**
+    ```bash
+    git clone https://github.com/andrewdr14/claims_fraud_detection.git
+    cd claims_fraud_detection
+    ```
 
-- **Environment variables not loading:**  
-  - Make sure `python-dotenv` is installed (`pip install python-dotenv`).
-  - The `.env` file must be in your project root.
+2. **(Recommended) Create and activate a virtual environment:**
+    ```bash
+    python -m venv venv
+    # On Windows:
+    venv\Scripts\activate
+    # On macOS/Linux:
+    source venv/bin/activate
+    ```
+
+3. **Install dependencies:**
+    ```bash
+    pip install --upgrade pip
+    pip install -r requirements.txt
+    ```
+
+4. **Install and start MongoDB:**  
+   - [Download & Install MongoDB](https://docs.mongodb.com/manual/installation/)
+   - Start the MongoDB service (usually `mongod` on the command line)
 
 ---
 
-## Dependencies 
+## Running the Application
 
-- Flask
-- pandas, numpy, scikit-learn, xgboost
-- pymongo, python-dotenv, joblib, Faker
-
-Install all with:
-
+### 1. **Generate Synthetic Data**
+Run the data generator to populate your MongoDB with synthetic claims data.
 ```bash
-pip install -r requirements.txt
+python -m claims_fraud.data_generator
 ```
 
+### 2. **Train Models**
+Train and save the machine learning models:
+```bash
+python -m claims_fraud.model
+```
+This will create and persist models (e.g., as `.pkl` files) for later use by the API.
+
+### 3. **Start the Flask API**
+Launch the web API to serve predictions:
+```bash
+python app.py
+```
+The API will be available at [http://localhost:5000](http://localhost:5000) by default.
+
+### 4. **Make Predictions**
+You can send POST requests to endpoints such as `/predict` with claim data, and the API will return a fraud prediction.  
+(See `app.py` for endpoint details and example payloads.)
+
 ---
 
-## Deployment
+## Running Tests
 
-- The app uses the `PORT` environment variable if set (for Render/Heroku compatibility).
-- For production, secure your Flask app and never commit your `.env` or credentials.
+Unit tests are provided for the data generation logic (and can be extended for other modules).
+
+To run all tests:
+```bash
+pytest
+```
+This will execute the tests in the `tests/` directory, currently focused on `data_generator.py`.
 
 ---
+
+## Database: MongoDB
+
+- Data (synthetic claims, predictions, etc.) is stored in MongoDB.
+- The application expects a local MongoDB instance running on `localhost:27017` by default.
+- You can configure MongoDB connection details in your code as needed.
+
+---
+
+## Contributing
+
+This repository is designed for **learning and experimentation**.  
+Suggestions, improvements, and contributions are highly welcome!
+
+- Fork the repo and submit a pull request.
+- Open issues for bugs, questions, or feature requests.
+- Ideas for new data features, model types, or explanatory materials are especially encouraged.
