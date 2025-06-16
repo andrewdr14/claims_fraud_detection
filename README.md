@@ -1,6 +1,6 @@
 # Claims Fraud Detection Learning Tool
 
-This project is designed as an educational resource for understanding and experimenting with machine learning techniques for insurance claims fraud detection. The codebase is modular, with ample opportunity to explore concepts in data science, backend web development, and production data flows.
+This project is designed as an educational resource for understanding and experimenting with machine learning techniques for insurance claims fraud detection. The codebase is modular, with ample opportunities for learning, extension, and hands-on exploration.
 
 ---
 
@@ -11,6 +11,7 @@ This project is designed as an educational resource for understanding and experi
 - [Theory: RandomForest & XGBoost](#theory-randomforest--xgboost)
 - [Project Structure](#project-structure)
 - [Installation](#installation)
+- [Environment Variables](#environment-variables)
 - [Running the Application](#running-the-application)
 - [Running Tests](#running-tests)
 - [Database: MongoDB](#database-mongodb)
@@ -35,7 +36,7 @@ It is intended as a **learning tool**, so code and documentation are designed fo
 
 ## Key Technologies Used
 
-- **Python 3.10+**
+- **Python 3.10+** (3.10 or 3.11 strongly recommended)
 - **Flask**: Lightweight web framework for building the API (`app.py`)
 - **MongoDB**: NoSQL database for storing claims data and predictions
 - **pymongo**: Python driver for MongoDB
@@ -49,14 +50,14 @@ It is intended as a **learning tool**, so code and documentation are designed fo
 
 ### RandomForest
 
-RandomForest is an ensemble machine learning technique that builds multiple decision trees and combines their predictions to improve accuracy and reduce overfitting. Each tree is trained with a random subset of the data and features, making the overall model more robust—especially important in detecting nuanced patterns of fraud.
+RandomForest is an ensemble machine learning technique that builds multiple decision trees and combines their predictions to improve accuracy and reduce overfitting. Each tree is trained with a random subset of the data and features.
 
 - **Pros**: Handles non-linear data, reduces overfitting, interpretable feature importance
 - **Cons**: Slower and less interpretable than a single tree
 
 ### XGBoost
 
-XGBoost (Extreme Gradient Boosting) is an efficient implementation of gradient-boosted decision trees. It builds trees sequentially, with each new tree focusing on the errors of the previous trees. XGBoost is widely used for its performance, speed, and ability to handle a variety of data types.
+XGBoost (Extreme Gradient Boosting) is an efficient implementation of gradient-boosted decision trees. It builds trees sequentially, with each new tree focusing on the errors of the previous trees.
 
 - **Pros**: High predictive power, built-in regularization, handles missing data
 - **Cons**: More complex, harder to tune
@@ -86,8 +87,8 @@ claims_fraud_detection/
 
 ## Installation
 
-> **Python 3.10 or 3.11 is strongly recommended.  
-> MongoDB must also be installed and running locally or accessible remotely.**
+> **Python 3.10 or 3.11 is strongly recommended.**  
+> **MongoDB must also be installed and running locally or accessible remotely.**
 
 1. **Clone the repository:**
     ```bash
@@ -116,29 +117,47 @@ claims_fraud_detection/
 
 ---
 
+## Environment Variables
+
+The application expects a MongoDB connection string to be set in a `.env` file in the project root directory.
+
+1. **Create a `.env` file in the root directory:**
+    ```
+    MONGODB_URI=mongodb://your-username:your-password@host:port/dbname
+    ```
+   Replace the value with your actual MongoDB connection details.
+
+2. **(Optional) See `.env.example` for formatting guidance.**
+
+---
+
 ## Running the Application
 
-### 1. **Generate Synthetic Data**
+### 1. Generate Synthetic Data
+
 Run the data generator to populate your MongoDB with synthetic claims data.
 ```bash
 python -m claims_fraud.data_generator
 ```
 
-### 2. **Train Models**
+### 2. Train Models
+
 Train and save the machine learning models:
 ```bash
 python -m claims_fraud.model
 ```
 This will create and persist models (e.g., as `.pkl` files) for later use by the API.
 
-### 3. **Start the Flask API**
+### 3. Start the Flask API
+
 Launch the web API to serve predictions:
 ```bash
 python app.py
 ```
 The API will be available at [http://localhost:5000](http://localhost:5000) by default.
 
-### 4. **Make Predictions**
+### 4. Make Predictions
+
 You can send POST requests to endpoints such as `/predict` with claim data, and the API will return a fraud prediction.  
 (See `app.py` for endpoint details and example payloads.)
 
@@ -159,8 +178,8 @@ This will execute the tests in the `tests/` directory, currently focused on `dat
 ## Database: MongoDB
 
 - Data (synthetic claims, predictions, etc.) is stored in MongoDB.
-- The application expects a local MongoDB instance running on `localhost:27017` by default.
-- You can configure MongoDB connection details in your code as needed.
+- The application expects a MongoDB connection string to be set in `.env` as `MONGODB_URI`. By default, a local MongoDB instance on `localhost:27017` is expected.
+- You can configure MongoDB connection details in your `.env` file.
 
 ---
 
