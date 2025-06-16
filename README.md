@@ -198,7 +198,28 @@ Organizing your code as a package makes it easier to maintain, test, and extend,
 
 ## Code Quality
 
+<<<<<<< HEAD
 - **Formatting:** Use [Black](https://black.readthedocs.io/en/stable/) for code formatting:  
   ```bash
   black .
  
+=======
+- Flask
+- pandas, numpy, scikit-learn, xgboost
+- pymongo, python-dotenv, joblib, Faker
+
+Install all with:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Deployment
+
+- The app uses the `PORT` environment variable if set (for Render/Heroku compatibility).
+- For production, secure your Flask app and never commit your `.env` or credentials.
+
+---
+>>>>>>> cffb5a0605ff4fc8b5f6eebc7741e4a3a77c7a14
