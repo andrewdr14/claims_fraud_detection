@@ -127,7 +127,7 @@ The application expects a MongoDB connection string to be set in a `.env` file i
     ```
    Replace the value with your actual MongoDB connection details.
 
-2. **(Optional) See `.env.example` for formatting guidance.**
+2. **See `.env.example` for formatting guidance.**
 
 ---
 
@@ -155,13 +155,6 @@ Launch the web API to serve predictions:
 python -m claims_fraud.app
 ```
 The API will be available at [http://localhost:5000](http://localhost:8080) by default.
-
-### 4. Make Predictions
-
-You can send POST requests to endpoints such as `/predict` with claim data, and the API will return a fraud prediction.  
-(See `app.py` for endpoint details and example payloads.)
-
----
 
 ## Running Tests
 
