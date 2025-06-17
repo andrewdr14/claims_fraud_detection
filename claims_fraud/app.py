@@ -4,7 +4,7 @@ import pandas as pd
 from flask import Flask, render_template, send_file
 from pymongo import MongoClient
 from dotenv import load_dotenv
-from . import model  # Import trained models
+from . import model  # Import trained models (change to import model if running as a script!)
 from sklearn.metrics import classification_report
 from typing import Dict, Any
 
