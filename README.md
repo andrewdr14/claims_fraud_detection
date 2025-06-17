@@ -154,7 +154,7 @@ Launch the web API to serve predictions:
 ```bash
 python -m claims_fraud.app
 ```
-The API will be available at [http://localhost:5000](http://localhost:5000) by default.
+The API will be available at [http://localhost:5000](http://localhost:8080) by default.
 
 ### 4. Make Predictions
 
