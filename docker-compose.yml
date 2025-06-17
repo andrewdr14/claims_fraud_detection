@@ -1,27 +1,25 @@
-version: "3.9"
+version: "3.8"
 
 services:
-  app:
-    build: .
-    ports:
-      - "8080:8080"
-    env_file:
-      - .env
-    depends_on:
-      - mongo
-    volumes:
-      - .:/app
-    restart: unless-stopped
-
   mongo:
     image: mongo:7
-    restart: unless-stopped
-    environment:
-      MONGO_INITDB_DATABASE: claims-fraud-db
+    restart: always
     ports:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+
+  app:
+    build: .
+    depends_on:
+      - mongo
+    ports:
+      - "8080:8080"
+    command: /bin/sh -c "python claims_fraud/data_generator.py && python claims_fraud/model.py && gunicorn --bind 0.0.0.0:8080 claims_fraud.app:app"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/claims-fraud-db
+    volumes:
+      - .:/app  # Optional: for live code reload in dev, remove in prod
 
 volumes:
   mongo_data:
