@@ -152,9 +152,9 @@ This will create and persist models (e.g., as `.pkl` files) for later use by the
 
 Launch the web API to serve predictions:
 ```bash
-python app.py
+python -m claims_fraud.app
 ```
-The API will be available at [http://localhost:5000](http://localhost:5000) by default.
+The API will be available at [http://localhost:5000](http://localhost:8080) by default.
 
 ### 4. Make Predictions
 
