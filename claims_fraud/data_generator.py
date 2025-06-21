@@ -72,8 +72,10 @@ def store_data_in_mongodb(df: pd.DataFrame) -> None:
 if __name__ == "__main__":
     # Generate dataset
     df = generate_claim_data()
-    df.to_csv("motor_insurance_claims.csv", index=False)
-    print("✅ Data generation complete: Saved to motor_insurance_claims.csv")
+    output_path = os.path.join(os.path.dirname(__file__), "motor_insurance_claims.csv")
+    # Save CSV to the same directory as this script
+    df.to_csv(output_path, index=False)
+    print(f"✅ Data generation complete: Saved to {output_path}")
 
     # Store in MongoDB
     store_data_in_mongodb(df)
