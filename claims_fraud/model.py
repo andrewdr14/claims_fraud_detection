@@ -1,71 +1,60 @@
+"""
+model.py
+
+This script trains a RandomForestClassifier using the generated CSV data
+and saves both the trained model and its results to disk.
+It does NOT interact with MongoDB.
+
+Usage:
+    python claims_fraud/model.py
+"""
+
 import os
-import joblib
-import numpy as np
 import pandas as pd
-from pymongo import MongoClient
-from dotenv import load_dotenv
 from sklearn.ensemble import RandomForestClassifier
-from xgboost import XGBClassifier
-from sklearn.model_selection import train_test_split
-from typing import List
+import pickle
 
-# Load environment variables
-load_dotenv()
-mongo_uri = os.getenv("MONGO_URI")
-client = MongoClient(mongo_uri)
-
-# Initialize models
-rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
-xgb_model = XGBClassifier(n_estimators=100, use_label_encoder=False, eval_metric="logloss")
-
-# Declare trained_features globally
-trained_features: List[str] = []
-
-def fetch_data() -> pd.DataFrame:
+def train_model(csv_path):
     """
-    Fetch all insurance claim data from MongoDB (excluding _id field).
+    Trains a RandomForestClassifier on the insurance claims dataset.
+
+    Args:
+        csv_path (str): Path to the CSV data.
 
     Returns:
-        pd.DataFrame: DataFrame containing all claims data from the database.
+        tuple: (trained model, dict of results/metrics)
     """
-    db = client["claims-fraud-db"]
-    collection = db["motor_insurance_claims"]
-    df = pd.DataFrame(list(collection.find({}, {"_id": 0})))  # Exclude `_id` for cleaner output
-    return df
+    # Load data
+    df = pd.read_csv(csv_path)
+    X = df.drop("fraud_reported", axis=1)
+    y = df["fraud_reported"]
 
-def initialize_models() -> None:
-    """
-    Preprocess data, train RandomForest and XGBoost models, and save the trained models.
-    Also sets the global trained_features list corresponding to the model features.
-    """
-    global trained_features  # Ensure it's accessible
+    # Train model
+    model = RandomForestClassifier(random_state=42)
+    model.fit(X, y)
 
-    df = fetch_data()
-    df["fraud_reported"] = df["fraud_reported"].astype(str).str.strip().str.capitalize()
-    label_map = {"Yes": 1, "No": 0}
-    df["fraud_label"] = df["fraud_reported"].map(label_map)
+    # Evaluate model
+    score = model.score(X, y)
+    results = {"accuracy": score}
 
-    # Remove unnecessary columns
-    df.drop(["umbrella_limit", "incident_hour_of_the_day", "number_of_vehicles", "fraud_label"], axis=1, inplace=True, errors="ignore")
+    return model, results
 
-    trained_features = df.select_dtypes(include=[np.number]).columns.tolist()
+if __name__ == "__main__":
+    # Paths for input and output files
+    csv_path = os.path.join(os.path.dirname(__file__), "motor_insurance_claims.csv")
+    model_path = os.path.join(os.path.dirname(__file__), "random_forest.pkl")
+    results_path = os.path.join(os.path.dirname(__file__), "model_results.pkl")
 
-    X, y = df[trained_features], df["fraud_reported"].map(label_map)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
+    # Train model and get results
+    model, results = train_model(csv_path)
 
-    rf_model.fit(X_train, y_train)
-    xgb_model.fit(X_train, y_train)
+    # Save the trained model
+    with open(model_path, "wb") as f:
+        pickle.dump(model, f)
 
-    # Save trained models
-    joblib.dump(rf_model, "random_forest.pkl")
-    joblib.dump(xgb_model, "xgboost.pkl")
+    # Save results/metrics
+    with open(results_path, "wb") as f:
+        pickle.dump(results, f)
 
-    print("✅ Models trained and saved!")
-
-# Load pre-trained models if available
-if os.path.exists("random_forest.pkl") and os.path.exists("xgboost.pkl"):
-    rf_model = joblib.load("random_forest.pkl")
-    xgb_model = joblib.load("xgboost.pkl")
-    print("✅ Pre-trained models loaded successfully!")
-else:
-    initialize_models()
+    print(f"✅ Model trained and saved to {model_path}! Accuracy: {results['accuracy']:.3f}")
+    print(f"✅ Results saved to {results_path}")

@@ -1,81 +1,42 @@
-import pandas as pd
-import random
-from faker import Faker
-from pymongo import MongoClient
+"""
+data_generator.py
+
+This script generates a synthetic motor insurance claims dataset and saves it as a CSV.
+It does NOT interact with MongoDB. To regenerate data, simply run this script.
+
+Usage:
+    python claims_fraud/data_generator.py
+"""
+
 import os
-from dotenv import load_dotenv
-from typing import Any
+import pandas as pd
+import numpy as np
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Initialize Faker for realistic data
-fake = Faker()
-
-def generate_claim_data(n: int = 5000) -> pd.DataFrame:
+def generate_claim_data(num_samples=1000):
     """
-    Generate synthetic motor insurance claims data.
+    Generates a synthetic dataset for motor insurance claims.
 
     Args:
-        n (int, optional): Number of samples to generate. Defaults to 5000.
+        num_samples (int): Number of samples to generate.
 
     Returns:
-        pd.DataFrame: DataFrame containing synthetic claim records.
+        pd.DataFrame: The generated dataset.
     """
-    data = []
-    collision_types = ["Rear-End", "Side Impact", "Front Collision", "Rollover", "Hit & Run"]
-
-    for _ in range(n):
-        claim = {
-            "policy_number": f"POL{fake.random_int(min=10000, max=99999)}",
-            "policy_deductible": random.choice([500, 1000, 2000]),
-            "policy_annual_premium": random.randint(500, 3000),
-            "umbrella_limit": random.choice([50000, 100000, 150000]),
-            "insured_age": random.randint(18, 85),
-            "incident_hour_of_the_day": random.randint(0, 23),
-            "collision_type": random.choice(collision_types),
-            "number_of_vehicles": random.randint(1, 5),
-            "total_claim_amount": random.randint(1000, 20000),
-            "fraud_reported": random.choice(["Yes", "No"])
-        }
-        data.append(claim)
-
-    return pd.DataFrame(data)
-
-def store_data_in_mongodb(df: pd.DataFrame) -> None:
-    """
-    Store generated data into MongoDB Atlas.
-
-    Args:
-        df (pd.DataFrame): DataFrame containing the claim data to store.
-
-    Raises:
-        ValueError: If the MONGO_URI environment variable is not set.
-    """
-    mongo_uri = os.getenv("MONGO_URI")  # Ensure environment variable is set
-    print("MONGO_URI is:", mongo_uri)   # Debug: Show the URI being used
-
-    if not mongo_uri:
-        raise ValueError("MONGO_URI environment variable not set. Please check your .env file.")
-
-    try:
-        client = MongoClient(mongo_uri)
-        db = client["claims-fraud-db"]
-        collection = db["motor_insurance_claims"]
-
-        # Insert data into MongoDB
-        collection.insert_many(df.to_dict(orient="records"))
-        print("✅ Data successfully stored in MongoDB Atlas")
-    except Exception as e:
-        print("❌ Failed to store data in MongoDB Atlas:", e)
+    np.random.seed(42)
+    data = {
+        'age': np.random.randint(18, 80, num_samples),
+        'annual_premium': np.random.randint(20000, 100000, num_samples),
+        'policy_sales_channel': np.random.randint(1, 20, num_samples),
+        'vintage': np.random.randint(10, 300, num_samples),
+        'fraud_reported': np.random.choice([0, 1], num_samples, p=[0.95, 0.05])
+    }
+    df = pd.DataFrame(data)
+    return df
 
 if __name__ == "__main__":
-    # Generate dataset
+    # Generate the synthetic data
     df = generate_claim_data()
+    # Save to CSV in same directory as script
     output_path = os.path.join(os.path.dirname(__file__), "motor_insurance_claims.csv")
-    # Save CSV to the same directory as this script
     df.to_csv(output_path, index=False)
     print(f"✅ Data generation complete: Saved to {output_path}")
-
-    # Store in MongoDB
-    store_data_in_mongodb(df)

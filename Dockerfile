@@ -1,19 +1,23 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim
+# Dockerfile for Insurance Fraud Project
+# Builds and prepares the environment for running the Flask web app
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+FROM python:3.11
 
-# Set work directory
 WORKDIR /app
 
-# Install dependencies
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy project files
 COPY . .
 
-# Expose port for Flask app
+# Generate the data and train the model at build time
+RUN python claims_fraud/data_generator.py
+RUN python claims_fraud/model.py
+
+# Expose the web server port
 EXPOSE 8080
+
+# Start the Flask app with Gunicorn (recommended for production)
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "claims_fraud.app:app"]

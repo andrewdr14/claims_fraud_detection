@@ -1,99 +1,77 @@
+"""
+app.py
+
+This is the main Flask application for the insurance fraud project.
+- At startup, it uploads the generated CSV and model results to MongoDB (if MONGO_URI is set).
+- The website displays results from the local files, NOT from MongoDB.
+- MongoDB is used as an archive/backup only.
+
+Usage:
+    flask run
+    or (recommended for production):
+    gunicorn --bind 0.0.0.0:8080 claims_fraud.app:app
+"""
+
 import os
-import joblib
 import pandas as pd
-from flask import Flask, render_template, send_file
+import pickle
+from flask import Flask, render_template
 from pymongo import MongoClient
-from dotenv import load_dotenv
-from . import model  # Import trained models (change to import model if running as a script!)
-from sklearn.metrics import classification_report
-from typing import Dict, Any
 
-# Set template_folder to find templates in the project root
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
-app = Flask(__name__, template_folder=TEMPLATES_DIR)
+app = Flask(__name__)
 
-# Load environment variables
-load_dotenv()
-mongo_uri = os.getenv("MONGO_URI")
-client = MongoClient(mongo_uri)
+def upload_to_mongodb(csv_path, results_path, mongo_uri):
+    """
+    Uploads the CSV data and model results to MongoDB.
 
-# Ensure models are initialized before accessing features
-model.initialize_models()
-trained_features = model.trained_features
+    Args:
+        csv_path (str): Path to the generated CSV file.
+        results_path (str): Path to the pickled model results.
+        mongo_uri (str): MongoDB connection URI.
+    """
+    client = MongoClient(mongo_uri)
+    db = client["claims-fraud-db"]
 
-# Load pre-trained models
-rf_model = joblib.load("random_forest.pkl")
-xgb_model = joblib.load("xgboost.pkl")
+    # Upload CSV data to MongoDB
+    df = pd.read_csv(csv_path)
+    csv_collection = db["claims_csv"]
+    csv_collection.delete_many({})  # Remove previous entries
+    csv_collection.insert_many(df.to_dict(orient="records"))
+
+    # Upload model results to MongoDB
+    with open(results_path, "rb") as f:
+        results = pickle.load(f)
+    results_collection = db["model_results"]
+    results_collection.delete_many({})
+    results_collection.insert_one({"results": results})
+
+@app.before_first_request
+def upload_once():
+    """
+    On the first request, uploads CSV and results to MongoDB if MONGO_URI is set.
+    This is only for archival/backup; the app does NOT serve data from MongoDB.
+    """
+    mongo_uri = os.getenv("MONGO_URI")
+    if mongo_uri:
+        csv_path = os.path.join(os.path.dirname(__file__), "motor_insurance_claims.csv")
+        results_path = os.path.join(os.path.dirname(__file__), "model_results.pkl")
+        upload_to_mongodb(csv_path, results_path, mongo_uri)
+        print("✅ Data and results uploaded to MongoDB.")
 
 @app.route("/")
-def evaluation() -> str:
+def home():
     """
-    Run fraud model evaluation and display results.
-
-    Returns:
-        str: Rendered HTML template with evaluation metrics and summary statistics.
+    Home route: loads results and a preview of the dataset from local files and renders them.
     """
-    df = model.fetch_data()  # Load claims data
-
-    df["fraud_reported"] = df["fraud_reported"].astype(str).str.strip().str.capitalize()
-    label_map = {"Yes": 1, "No": 0}
-    df["fraud_label"] = df["fraud_reported"].map(label_map)
-
-    y_true = df["fraud_label"]
-    y_pred_rf = rf_model.predict(df[trained_features])
-    y_pred_xgb = xgb_model.predict(df[trained_features])
-
-    # Generate classification reports dynamically
-    rf_results = classification_report(y_true, y_pred_rf, output_dict=True)
-    xgb_results = classification_report(y_true, y_pred_xgb, output_dict=True)
-
-    # Generate summary statistics
-    policy_holder_count = len(df)
-    fraud_cases = (df["fraud_reported"] == "Yes").sum()
-    non_fraud_cases = (df["fraud_reported"] == "No").sum()
-
-    # Compute descriptive statistics for numeric columns (excluding specific ones)
-    excluded_columns = ["umbrella_limit", "incident_hour_of_the_day", "number_of_vehicles", "fraud_label"]
-    numeric_cols = [col for col in trained_features if col not in excluded_columns]
-
-    summary_stats: Dict[str, Any] = {
-        "Total Policy Holders": policy_holder_count,
-        "Fraud Reported": fraud_cases,
-        "No Fraud Reported": non_fraud_cases
-    }
-
-    # Add detailed statistics (Max, Min, Mean, Median, Std Dev)
-    for col in numeric_cols:
-        summary_stats[f"{col} - Min"] = df[col].min()
-        summary_stats[f"{col} - Max"] = df[col].max()
-        summary_stats[f"{col} - Mean"] = round(df[col].mean(), 2)
-        summary_stats[f"{col} - Median"] = df[col].median()
-        summary_stats[f"{col} - Std Dev"] = round(df[col].std(), 2)
-
-    return render_template(
-        "results.html",
-        rf_results=rf_results,
-        xgb_results=xgb_results,
-        summary_stats=summary_stats
-    )
-
-@app.route("/download-data")
-def download_data() -> Any:
-    """
-    Allow users to download the dataset.
-
-    Returns:
-        Response: Sends the CSV dataset file as an attachment.
-    """
-    # Ensure the CSV is served from the correct directory
     csv_path = os.path.join(os.path.dirname(__file__), "motor_insurance_claims.csv")
-    if not os.path.exists(csv_path):
-        # Return a 404 with a simple error message if the file doesn't exist
-        return "Dataset not found. Please generate data first.", 404
-    return send_file(csv_path, as_attachment=True)
+    results_path = os.path.join(os.path.dirname(__file__), "model_results.pkl")
 
-if __name__ == "__main__":
-    # Dynamically assign Render's port for deployment
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    # Load data and results from disk
+    df = pd.read_csv(csv_path)
+    with open(results_path, "rb") as f:
+        results = pickle.load(f)
+    # Display first few records as a preview
+    data_preview = df.head().to_dict(orient="records")
+
+    # Render your results page (replace with your template as needed)
+    return render_template("results.html", results=results, data=data_preview)

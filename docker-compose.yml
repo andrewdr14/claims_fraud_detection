@@ -15,11 +15,9 @@ services:
       - mongo
     ports:
       - "8080:8080"
-    command: /bin/sh -c "python claims_fraud/data_generator.py && python claims_fraud/model.py && gunicorn --bind 0.0.0.0:8080 claims_fraud.app:app"
     environment:
       - MONGO_URI=mongodb://mongo:27017/claims-fraud-db
-    volumes:
-      - .:/app  # Optional: for live code reload in dev, remove in prod
+
 
 volumes:
   mongo_data:
