@@ -1,5 +1,9 @@
 # Claims Fraud Detection Learning Tool
 
+UPCOMING CHANGES (in order):
+    - Tighten rules for fraud, pushing fraud cases down to ~1%, then apply SMOTE to training data to tackle the class            imbalance. See what happens.
+    - Test on some real world data, wherever that may be...
+
 This project is an educational resource for understanding and experimenting with machine learning techniques for insurance claims fraud detection. The codebase is modular, with example opportunities for learning, extension, and hands-on exploration.
 
 ---
