@@ -47,7 +47,7 @@ def is_fraudulent(
     else:
         return "Yes" if random.random() < base_fraud_prob else "No"
 
-def generate_claim_data(n: int = 10000) -> pd.DataFrame:
+def generate_claim_data(n: int = 50000) -> pd.DataFrame:
     """
     Generate synthetic motor insurance claims data.
 
