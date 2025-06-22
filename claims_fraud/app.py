@@ -86,7 +86,11 @@ def download_data() -> Any:
     Returns:
         Response: Sends the CSV dataset file as an attachment.
     """
-    return send_file("motor_insurance_claims.csv", as_attachment=True)
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    csv_path = os.path.join(base_dir, "motor_insurance_claims.csv")
+    if not os.path.exists(csv_path):
+        abort(404, description="Dataset file not found. Please generate it first.")
+    return send_file(csv_path, as_attachment=True)
 
 if __name__ == "__main__":
     # Dynamically assign Render's port for deployment
