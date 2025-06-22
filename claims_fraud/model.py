@@ -62,10 +62,5 @@ def initialize_models() -> None:
 
     print("✅ Models trained and saved!")
 
-# Load pre-trained models if available
-if os.path.exists("random_forest.pkl") and os.path.exists("xgboost.pkl"):
-    rf_model = joblib.load("random_forest.pkl")
-    xgb_model = joblib.load("xgboost.pkl")
-    print("✅ Pre-trained models loaded successfully!")
-else:
-    initialize_models()
+
+initialize_models()

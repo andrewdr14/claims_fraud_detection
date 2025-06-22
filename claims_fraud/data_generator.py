@@ -12,7 +12,7 @@ load_dotenv()
 # Initialize Faker for realistic data
 fake = Faker()
 
-def generate_claim_data(n: int = 5000) -> pd.DataFrame:
+def generate_claim_data(n: int = 50000) -> pd.DataFrame:
     """
     Generate synthetic motor insurance claims data.
 
@@ -63,6 +63,9 @@ def store_data_in_mongodb(df: pd.DataFrame) -> None:
         db = client["claims-fraud-db"]
         collection = db["motor_insurance_claims"]
 
+        # Clear the collection before inserting new data
+        collection.delete_many({})
+        
         # Insert data into MongoDB
         collection.insert_many(df.to_dict(orient="records"))
         print("✅ Data successfully stored in MongoDB Atlas")
