@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Motor Insurance Fraud Detection</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
@@ -42,6 +41,46 @@
             border: 1px solid #ddd;
             box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
         }
+        .subsection {
+            margin-bottom: 32px;
+        }
+        .graph-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 18px;
+            margin: 18px 0 24px 0;
+        }
+        .inline-img {
+            display: block;
+            max-width: 33vw;
+            min-width: 300px;
+            width: 100%;
+            height: 340px;
+            object-fit: contain;
+            border: 1px solid #ccc;
+            background: #fff;
+            padding: 5px;
+            border-radius: 6px;
+            margin: 0;
+        }
+        .metric-table {
+            margin-bottom: 30px;
+        }
+        @media (max-width: 1000px) {
+            .graph-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .inline-img {
+                max-width: 100%;
+                min-width: 0;
+                height: 260px;
+            }
+        }
+        .metric-details li {
+            margin-bottom: 7px;
+        }
     </style>
 </head>
 <body>
@@ -51,8 +90,45 @@
 
     <section class="intro">
         <h2>🔍 Project Overview</h2>
-        <p>This tool is designed to analyze insurance claims and detect potential fraud using machine learning models. 
-        It compares the performance of <strong>Random Forest</strong> and <strong>XGBoost</strong> classifiers in identifying fraudulent claims based on structured data.</p>
+        <p>This tool is designed to analyze insurance claims and detect potential fraud using machine learning models. It compares the performance of <strong>Random Forest</strong> and <strong>XGBoost</strong> classifiers in identifying fraudulent claims based on structured data.</p>
+    </section>
+
+    <section>
+        <h2>🕵️ How Fraudulent Claims Are Determined</h2>
+        <div>
+            <b>Fraud labels are assigned using a combination of business rules and randomness to simulate real-world error and noise:</b>
+            <ul>
+                <li>
+                    <b>Rules:</b> A claim is marked as fraud if two or more of the following are true:
+                    <ul>
+                        <li>Total claim amount &gt; $15,000 and deductible is $500</li>
+                        <li>Incident happens late at night or early morning (before 5am or after 10pm)</li>
+                        <li>Collision type is "Hit & Run"</li>
+                        <li>Insured is under 22 years old and claim amount &gt; $12,000</li>
+                        <li>Number of vehicles &ge; 3 and annual premium &gt; $2,500</li>
+                    </ul>
+                </li>
+                <li>
+                    <b>Randomness:</b>
+                    <ul>
+                        <li>Even if rules are met, a small number of fraudulent claims are missed (simulated false negatives).</li>
+                        <li>If only one rule is met, there’s a small chance of being marked as fraud (simulated false positives).</li>
+                        <li>If no rules are met, there’s still a tiny chance of a random fraud label.</li>
+                    </ul>
+                </li>
+                <li>This approach creates a realistic mix of correctly and incorrectly labeled fraud claims, making the detection task more challenging and authentic.</li>
+            </ul>
+        </div>
+    </section>
+
+    <section>
+        <h2>📋 Data Used</h2>
+        <h3>All Data Points Generated and Used for Model Training</h3>
+        <ul>
+          {% for col in all_columns %}
+            <li><b>{{ col }}</b>: {{ data_descriptions.get(col, "No description available.") }}</li>
+          {% endfor %}
+        </ul>
     </section>
 
     <section>
@@ -101,16 +177,9 @@
         </table>
     </section>
 
-    <section>
-        <h2>🛡 Model Evaluation Metrics</h2>
-        <p><strong>Precision:</strong> Measures the percentage of fraudulent claims correctly identified among all claims flagged as fraud.</p>
-        <p><strong>Recall:</strong> Indicates how many actual fraudulent claims were successfully detected.</p>
-        <p><strong>F1-Score:</strong> A balance between precision and recall, providing an overall measure of model accuracy.</p>
-    </section>
-
-    <section>
+    <section class="subsection">
         <h2>🛡 Random Forest Evaluation</h2>
-        <table>
+        <table class="metric-table">
             <tr>
                 <th>Metric</th>
                 <th>Class 0 (No Fraud)</th>
@@ -128,11 +197,17 @@
             </tr>
             {% endfor %}
         </table>
+        <p><b>ROC-AUC:</b> {{ "%.3f"|format(rf_roc_auc) }} &nbsp;|&nbsp; <b>PR-AUC:</b> {{ "%.3f"|format(rf_pr_auc) }}</p>
+        <div class="graph-row">
+            <img class="inline-img" src="data:image/png;base64,{{ rf_cm_img }}" alt="Random Forest Confusion Matrix" title="Random Forest Confusion Matrix">
+            <img class="inline-img" src="data:image/png;base64,{{ rf_roc_img }}" alt="Random Forest ROC Curve" title="Random Forest ROC Curve">
+            <img class="inline-img" src="data:image/png;base64,{{ rf_pr_img }}" alt="Random Forest Precision-Recall Curve" title="Random Forest Precision-Recall Curve">
+        </div>
     </section>
 
-    <section>
+    <section class="subsection">
         <h2>⚡ XGBoost Evaluation</h2>
-        <table>
+        <table class="metric-table">
             <tr>
                 <th>Metric</th>
                 <th>Class 0 (No Fraud)</th>
@@ -150,6 +225,38 @@
             </tr>
             {% endfor %}
         </table>
+        <p><b>ROC-AUC:</b> {{ "%.3f"|format(xgb_roc_auc) }} &nbsp;|&nbsp; <b>PR-AUC:</b> {{ "%.3f"|format(xgb_pr_auc) }}</p>
+        <div class="graph-row">
+            <img class="inline-img" src="data:image/png;base64,{{ xgb_cm_img }}" alt="XGBoost Confusion Matrix" title="XGBoost Confusion Matrix">
+            <img class="inline-img" src="data:image/png;base64,{{ xgb_roc_img }}" alt="XGBoost ROC Curve" title="XGBoost ROC Curve">
+            <img class="inline-img" src="data:image/png;base64,{{ xgb_pr_img }}" alt="XGBoost Precision-Recall Curve" title="XGBoost Precision-Recall Curve">
+        </div>
+    </section>
+
+    <section>
+        <h2>ℹ️ About The Evaluation Metrics</h2>
+        <div style="background:#fff;padding:18px 20px 10px 20px;border:1px solid #ddd;border-radius:6px;margin-bottom:20px;">
+            <ul class="metric-details">
+                <li><b>Precision:</b> The proportion of positive identifications (claims predicted as fraud) that were actually correct. High precision means fewer false positives. <br>
+                    <i>Example: If the model says 100 claims are fraud and 90 really are, precision is 0.90.</i>
+                </li>
+                <li><b>Recall (Sensitivity):</b> The proportion of actual positive cases (true fraud) that were identified correctly. High recall means fewer false negatives.<br>
+                    <i>Example: If there are 100 actual fraud cases and the model finds 80, recall is 0.80.</i>
+                </li>
+                <li><b>F1-Score:</b> The harmonic mean of precision and recall. It is a single metric that balances both, especially useful if your data is imbalanced.<br>
+                    <i>F1 = 2 × (precision × recall) / (precision + recall).</i>
+                </li>
+                <li><b>Confusion Matrix:</b> A table showing how many claims were correctly/incorrectly classified as fraud or not fraud. <br>
+                    <i>Rows = Actual class, Columns = Predicted class. Top left = True Negatives, top right = False Positives, bottom left = False Negatives, bottom right = True Positives.</i>
+                </li>
+                <li><b>ROC-AUC (Receiver Operating Characteristic - Area Under Curve):</b> Measures the model's ability to distinguish between classes across all thresholds.<br>
+                    <i>The ROC curve plots True Positive Rate vs. False Positive Rate. The AUC summarizes performance: 1.0 = perfect, 0.5 = random guessing. Higher is better.</i>
+                </li>
+                <li><b>PR-AUC (Precision-Recall Area Under Curve):</b> Especially useful for imbalanced data. Shows the tradeoff between precision and recall for different thresholds.<br>
+                    <i>Higher PR-AUC means the model is better at finding actual fraud with fewer false alarms, even when fraud is rare.</i>
+                </li>
+            </ul>
+        </div>
     </section>
 
     <section>
@@ -158,8 +265,5 @@
         <a href="{{ url_for('download_data') }}" class="btn">Download CSV</a>
     </section>
 
-    <footer>
-        <p>&copy; 2025 Fraud Detection System - Designed for accuracy & transparency</p>
-    </footer>
 </body>
 </html>

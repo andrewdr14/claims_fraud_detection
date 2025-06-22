@@ -1,6 +1,6 @@
 # Claims Fraud Detection Learning Tool
 
-This project is designed as an educational resource for understanding and experimenting with machine learning techniques for insurance claims fraud detection. The codebase is modular, with ample opportunities for learning, extension, and hands-on exploration.
+This project is an educational resource for understanding and experimenting with machine learning techniques for insurance claims fraud detection. The codebase is modular, with example opportunities for learning, extension, and hands-on exploration.
 
 ---
 
@@ -8,7 +8,6 @@ This project is designed as an educational resource for understanding and experi
 
 - [Project Overview](#project-overview)
 - [Key Technologies Used](#key-technologies-used)
-- [Theory: RandomForest & XGBoost](#theory-randomforest--xgboost)
 - [Project Structure](#project-structure)
 - [Installation](#installation)
 - [Environment Variables](#environment-variables)
@@ -16,19 +15,21 @@ This project is designed as an educational resource for understanding and experi
 - [Running Tests](#running-tests)
 - [Database: MongoDB](#database-mongodb)
 - [Contributing](#contributing)
+- [Limitations](#limitations)
 - [License](#license)
 
 ---
 
 ## Project Overview
 
-This repository demonstrates a full workflow for detecting fraudulent insurance claims using machine learning, including:
+This repository demonstrates a complete workflow for detecting fraudulent insurance claims using machine learning, including:
 
 - **Data generation and preprocessing** (with `data_generator.py`)
 - **Model training and evaluation** (with `model.py`)
 - **Web API for fraud prediction** (with `app.py`, using Flask)
 - **Storing and retrieving data via MongoDB**
-- **Unit tests for data generation logic**
+- **Unit tests for data generation**
+- **Interactive dashboard and visualizations**
 
 It is intended as a **learning tool**, so code and documentation are designed for clarity and exploration.
 
@@ -42,25 +43,9 @@ It is intended as a **learning tool**, so code and documentation are designed fo
 - **pymongo**: Python driver for MongoDB
 - **scikit-learn**: Machine learning models and utilities
 - **xgboost**: Advanced gradient boosting model
-- **pytest**: For running unit tests
-
----
-
-## Theory: RandomForest & XGBoost
-
-### RandomForest
-
-RandomForest is an ensemble machine learning technique that builds multiple decision trees and combines their predictions to improve accuracy and reduce overfitting. Each tree is trained with a random subset of the data and features.
-
-- **Pros**: Handles non-linear data, reduces overfitting, interpretable feature importance
-- **Cons**: Slower and less interpretable than a single tree
-
-### XGBoost
-
-XGBoost (Extreme Gradient Boosting) is an efficient implementation of gradient-boosted decision trees. It builds trees sequentially, with each new tree focusing on the errors of the previous trees.
-
-- **Pros**: High predictive power, built-in regularization, handles missing data
-- **Cons**: More complex, harder to tune
+- **pytest**: For running unit tests (currently focused on `data_generator.py`)
+- **matplotlib**: For result visualization
+- **Faker**: For generating realistic synthetic claim data
 
 ---
 
@@ -69,15 +54,15 @@ XGBoost (Extreme Gradient Boosting) is an efficient implementation of gradient-b
 ```
 claims_fraud_detection/
 │
-├── claims_fraud/                # Main package with core logic
+├── claims_fraud/                  
 │   ├── __init__.py
-│   ├── data_generator.py        # Scripts for generating synthetic claims data
-│   ├── model.py                 # Model training, saving, and loading logic
-│   └── ...                      # (other modules)
-├── app.py                       # Flask web API for predictions
-├── requirements.txt             # Python dependencies
-├── tests/                       # Unit tests (currently for data_generator.py)
-│   ├── __init__.py
+│   ├── data_generator.py          # Scripts for generating synthetic claims data
+│   ├── model.py                   # Model training, saving, and loading logic
+│   ├── app.py                     # Flask web API for predictions
+│   └── ...                        # (other modules)
+│
+├── requirements.txt               # Python dependencies
+├── tests/                         # Unit tests (currently for data_generator.py)
 │   └── test_data_generator.py
 ├── README.md
 └── ...
@@ -111,9 +96,9 @@ claims_fraud_detection/
     pip install -r requirements.txt
     ```
 
-4. **Install and start MongoDB:**  
-   - [Download & Install MongoDB](https://docs.mongodb.com/manual/installation/)
-   - Start the MongoDB service (usually `mongod` on the command line)
+4. **Install and start MongoDB:**
+    - [Download & Install MongoDB](https://docs.mongodb.com/manual/installation/)
+    - Start the MongoDB service (usually `mongod` on the command line).
 
 ---
 
@@ -121,13 +106,11 @@ claims_fraud_detection/
 
 The application expects a MongoDB connection string to be set in a `.env` file in the project root directory.
 
-1. **Create a `.env` file in the root directory:**
-    ```
-    MONGODB_URI=mongodb://your-username:your-password@host:port/dbname
-    ```
-   Replace the value with your actual MongoDB connection details.
-
-2. **See `.env.example` for formatting guidance.**
+**Example `.env` file:**
+```
+MONGO_URI=mongodb://localhost:27017
+```
+Replace the value with your actual MongoDB connection details.
 
 ---
 
@@ -135,7 +118,8 @@ The application expects a MongoDB connection string to be set in a `.env` file i
 
 ### 1. Generate Synthetic Data
 
-Run the data generator to populate your MongoDB with synthetic claims data.
+Run the data generator to populate your MongoDB with synthetic claims data:
+
 ```bash
 python -m claims_fraud.data_generator
 ```
@@ -143,18 +127,21 @@ python -m claims_fraud.data_generator
 ### 2. Train Models
 
 Train and save the machine learning models:
+
 ```bash
 python -m claims_fraud.model
 ```
-This will create and persist models (e.g., as `.pkl` files) for later use by the API.
 
 ### 3. Start the Flask API
 
-Launch the web API to serve predictions:
+Launch the web API to serve predictions and visualizations:
+
 ```bash
 python -m claims_fraud.app
 ```
-The API will be available at [http://localhost:5000](http://localhost:8080) by default.
+The API will be available at [http://localhost:8080](http://localhost:8080) by default.
+
+---
 
 ## Running Tests
 
@@ -164,15 +151,14 @@ To run all tests:
 ```bash
 pytest
 ```
-This will execute the tests in the `tests/` directory, currently focused on `data_generator.py`.
 
 ---
 
 ## Database: MongoDB
 
-- Data (synthetic claims, predictions, etc.) is stored in MongoDB.
-- The application expects a MongoDB connection string to be set in `.env` as `MONGODB_URI`. By default, a local MongoDB instance on `localhost:27017` is expected.
-- You can configure MongoDB connection details in your `.env` file.
+- Synthetic claim data and predictions are stored in MongoDB.
+- The application expects a MongoDB connection string as `MONGO_URI` in your `.env`.
+- By default, a local MongoDB instance on `localhost:27017` is expected, but you can adjust this for remote or cloud MongoDB setups.
 
 ---
 
@@ -184,3 +170,32 @@ Suggestions, improvements, and contributions are highly welcome!
 - Fork the repo and submit a pull request.
 - Open issues for bugs, questions, or feature requests.
 - Ideas for new data features, model types, or explanatory materials are especially encouraged.
+
+---
+
+## Limitations
+
+**This project is a learning tool with important limitations:**
+
+- **Synthetic Data and Labels:**  
+  All data is artificially generated using a mixture of business rules and randomness. Most fraudulent claims are labeled based on a small set of simple, transparent rules; a minority are labeled as fraud randomly (to simulate error/noise), and some true frauds are missed at random (simulating false negatives).
+
+- **Feature–Label Leakage:**  
+  The same features used to assign fraud labels are also used for model training. In real-world scenarios, the true fraud labels are not a direct function of input features, and "label leakage" is much less likely.
+
+- **Clean Data:**  
+  The synthetic data is well-formed, with no missing values, typos, or real-world messiness.
+
+- **Class Balance:**  
+  The proportion of fraudulent cases can be set arbitrarily; real insurance fraud is fairly rare.
+
+- **No Adversarial Examples:**  
+  In reality, fraudsters adapt and try to evade detection. Here, there is no such adversarial activity.
+
+- **Overoptimistic Model Performance:**  
+  Because of the above, models achieve unrealistically high metrics (precision, recall, ROC-AUC, etc.).  
+  Real claims fraud detection is much more difficult, with far more subtle signals and noise.
+
+---
+
+**Suggestions & improvements are welcome!**

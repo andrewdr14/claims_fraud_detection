@@ -12,12 +12,47 @@ load_dotenv()
 # Initialize Faker for realistic data
 fake = Faker()
 
-def generate_claim_data(n: int = 50000) -> pd.DataFrame:
+def is_fraudulent(
+    claim: dict,
+    base_fraud_prob=0.025,
+    extra_prob_if_1=0.09,
+    false_negative_prob=0.04
+) -> str:
+    """
+    Assign fraud label with a rule-based system and some randomness.
+
+    - If 2+ rules match: fraud unless marked as false negative by chance.
+    - If 1 rule matches: fraud with a small probability (simulate false positives).
+    - Otherwise: assign fraud randomly (low base rate).
+    """
+    suspicious = 0
+    if claim['total_claim_amount'] > 15000 and claim['policy_deductible'] == 500:
+        suspicious += 1
+    if claim['incident_hour_of_the_day'] < 5 or claim['incident_hour_of_the_day'] > 22:
+        suspicious += 1
+    if claim['collision_type'] == "Hit & Run":
+        suspicious += 1
+    if claim['insured_age'] < 22 and claim['total_claim_amount'] > 12000:
+        suspicious += 1
+    if claim['number_of_vehicles'] >= 3 and claim['policy_annual_premium'] > 2500:
+        suspicious += 1
+
+    # Main rule: fraud if 2+ triggers, with a small chance (false_negative_prob) to escape detection
+    if suspicious >= 2:
+        return "No" if random.random() < false_negative_prob else "Yes"
+    # 1 trigger: some chance of being fraud (false positive)
+    elif suspicious == 1:
+        return "Yes" if random.random() < extra_prob_if_1 else "No"
+    # 0 triggers: very small chance of being fraud (random noise)
+    else:
+        return "Yes" if random.random() < base_fraud_prob else "No"
+
+def generate_claim_data(n: int = 10000) -> pd.DataFrame:
     """
     Generate synthetic motor insurance claims data.
 
     Args:
-        n (int, optional): Number of samples to generate. Defaults to 5000.
+        n (int, optional): Number of samples to generate. Defaults to 10000.
 
     Returns:
         pd.DataFrame: DataFrame containing synthetic claim records.
@@ -35,9 +70,9 @@ def generate_claim_data(n: int = 50000) -> pd.DataFrame:
             "incident_hour_of_the_day": random.randint(0, 23),
             "collision_type": random.choice(collision_types),
             "number_of_vehicles": random.randint(1, 5),
-            "total_claim_amount": random.randint(1000, 20000),
-            "fraud_reported": random.choice(["Yes", "No"])
+            "total_claim_amount": random.randint(1000, 20000)
         }
+        claim["fraud_reported"] = is_fraudulent(claim)
         data.append(claim)
 
     return pd.DataFrame(data)
