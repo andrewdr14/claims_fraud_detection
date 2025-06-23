@@ -30,8 +30,6 @@ def is_fraudulent(
         suspicious += 1
     if claim['incident_hour_of_the_day'] < 5 or claim['incident_hour_of_the_day'] > 22:
         suspicious += 1
-    if claim['collision_type'] == "Hit & Run":
-        suspicious += 1
     if claim['insured_age'] < 22 and claim['total_claim_amount'] > 12000:
         suspicious += 1
     if claim['number_of_vehicles'] >= 3 and claim['policy_annual_premium'] > 2500:

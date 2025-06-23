@@ -64,6 +64,19 @@
             border-radius: 6px;
             margin: 0;
         }
+        .feature-importance-img {
+            display: block;
+            width: 100%;
+            min-width: 900px;
+            max-width: 100vw;
+            height: 420px;
+            object-fit: contain;
+            border: 1px solid #ccc;
+            background: #fff;
+            padding: 5px;
+            border-radius: 6px;
+            margin: 0 auto;
+        }
         .metric-table {
             margin-bottom: 30px;
         }
@@ -76,6 +89,11 @@
                 max-width: 100%;
                 min-width: 0;
                 height: 260px;
+            }
+            .feature-importance-img {
+                min-width: 0;
+                width: 100%;
+                height: 300px;
             }
         }
         .metric-details li {
@@ -94,29 +112,32 @@
     </section>
 
     <section>
-        <h2>🕵️ How Fraudulent Claims Are Determined</h2>
+        <h2>🕵️‍♂️ How Fraudulent Claims Are Determined</h2>
         <div>
-            <b>Fraud labels are assigned using a combination of business rules and randomness to simulate real-world error and noise:</b>
+            <b>Fraud labels are assigned using a combination of strict business rules and limited randomness to better simulate a realistic, challenging fraud detection task:</b>
             <ul>
                 <li>
-                    <b>Rules:</b> A claim is marked as fraud if two or more of the following are true:
+                    <b>Rules:</b> A claim is marked as fraud if <u>two or more</u> of the following are true:
                     <ul>
-                        <li>Total claim amount &gt; $15,000 and deductible is $500</li>
-                        <li>Incident happens late at night or early morning (before 5am or after 10pm)</li>
-                        <li>Collision type is "Hit & Run"</li>
-                        <li>Insured is under 22 years old and claim amount &gt; $12,000</li>
-                        <li>Number of vehicles &ge; 3 and annual premium &gt; $2,500</li>
+                        <li><b>Total claim amount &gt; $17,500</b> <i>and</i> <b>deductible is $500</b></li>
+                        <li><b>Incident time</b> is <b>before 4am or after 11pm</b></li>
+                        <li><b>Insured is under 22 years old</b> <i>and</i> <b>claim amount &gt; $15,000</b></li>
+                        <li><b>Number of vehicles &ge; 3</b> <i>and</i> <b>annual premium &gt; $3,000</b></li>
+                        <li>Days since previous claim &lt; 180</li>
+                        <li>Police report available is <b>No</b></li>
                     </ul>
                 </li>
                 <li>
-                    <b>Randomness:</b>
+                    <b>Randomness (Minimized):</b>
                     <ul>
-                        <li>Even if rules are met, a small number of fraudulent claims are missed (simulated false negatives).</li>
-                        <li>If only one rule is met, there’s a small chance of being marked as fraud (simulated false positives).</li>
-                        <li>If no rules are met, there’s still a tiny chance of a random fraud label.</li>
+                        <li>If only one rule is met, there’s a <b>very small</b> chance (&lt;1%) of being marked as fraud (to simulate rare mistakes).</li>
+                        <li>If no rules are met, fraud is <b>almost never</b> assigned (&lt;0.1%).</li>
+                        <li>Even if rules are met, a small number of fraudulent claims are missed to simulate occasional oversight.</li>
                     </ul>
                 </li>
-                <li>This approach creates a realistic mix of correctly and incorrectly labeled fraud claims, making the detection task more challenging and authentic.</li>
+                <li>
+                    <b>Explanation:</b> These rules ensure that only claims with multiple high-risk factors are marked as fraud, leading to a more realistic and challenging dataset for modeling.
+                </li>
             </ul>
         </div>
     </section>
@@ -177,8 +198,8 @@
         </table>
     </section>
 
-    <section class="subsection">
-        <h2>🛡 Random Forest Evaluation</h2>
+    <section>
+        <h2>🛡️ Random Forest Evaluation</h2>
         <table class="metric-table">
             <tr>
                 <th>Metric</th>
@@ -231,6 +252,19 @@
             <img class="inline-img" src="data:image/png;base64,{{ xgb_roc_img }}" alt="XGBoost ROC Curve" title="XGBoost ROC Curve">
             <img class="inline-img" src="data:image/png;base64,{{ xgb_pr_img }}" alt="XGBoost Precision-Recall Curve" title="XGBoost Precision-Recall Curve">
         </div>
+    </section>
+
+    <section>
+        <h2>🔍 Feature Importance Comparison</h2>
+        <div style="margin: 24px 0;">
+            <img class="feature-importance-img" src="data:image/png;base64,{{ feature_importance_img }}" alt="Feature Importance Comparison" title="Feature Importance: Random Forest vs XGBoost">
+        </div>
+        <p>
+            <i>
+            This chart shows how important each model considers each feature for predicting insurance fraud.
+            Higher bars mean greater influence on fraud prediction for that model.
+            </i>
+        </p>
     </section>
 
     <section>

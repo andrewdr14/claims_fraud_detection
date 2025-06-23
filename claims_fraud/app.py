@@ -19,6 +19,7 @@ matplotlib.use('Agg')  # Use non-GUI backend for plotting
 import matplotlib.pyplot as plt
 import io
 import base64
+import numpy as np
 
 # ----------------------------------------------------------------------
 # DATA DESCRIPTIONS AND FRAUD RULE TEXT
@@ -36,17 +37,6 @@ DATA_DESCRIPTIONS = {
     "total_claim_amount": "Total amount claimed for the incident (1,000 to 20,000).",
     "fraud_reported": "Whether the claim was reported as fraud ('Yes' or 'No')."
 }
-
-FRAUD_RULE_DESCRIPTION = """
-Fraud labels are assigned using the following rule: a claim is marked as fraudulent if two or more of the following are true:
-<ul>
-  <li>Total claim amount &gt; $15,000 and deductible is $500</li>
-  <li>Incident happens late at night or early morning (before 5am or after 10pm)</li>
-  <li>Collision type is "Hit & Run"</li>
-  <li>Insured is under 22 years old and claim amount &gt; $12,000</li>
-  <li>Number of vehicles &ge; 3 and annual premium &gt; $2,500</li>
-</ul>
-"""
 
 # ----------------------------------------------------------------------
 # FLASK APP INITIALIZATION
@@ -72,6 +62,37 @@ xgb_model = joblib.load("xgboost.pkl")
 # ----------------------------------------------------------------------
 # HELPER FUNCTIONS FOR PLOTS
 # ----------------------------------------------------------------------
+
+def plot_feature_importances(rf_model, xgb_model, feature_names):
+    """
+    Plot a side-by-side comparison of feature importances for RF and XGB.
+    Returns base64-encoded PNG.
+    """
+    rf_imp = rf_model.feature_importances_
+    xgb_imp = xgb_model.feature_importances_
+
+    # Sort by mean importance for visual clarity
+    mean_imp = (rf_imp + xgb_imp) / 2
+    sorted_idx = np.argsort(mean_imp)[::-1]
+
+    plt.figure(figsize=(12, 6))
+    bar_width = 0.35
+    indices = np.arange(len(feature_names))
+
+    plt.bar(indices - bar_width/2, rf_imp[sorted_idx], bar_width, label="Random Forest", color='#007bff', alpha=0.85)
+    plt.bar(indices + bar_width/2, xgb_imp[sorted_idx], bar_width, label="XGBoost", color='#ff9900', alpha=0.7)
+    plt.xticks(indices, np.array(feature_names)[sorted_idx], rotation=45, ha='right', fontsize=10)
+    plt.ylabel("Importance")
+    plt.title("Feature Importance Comparison (Random Forest vs XGBoost)")
+    plt.legend()
+    plt.tight_layout()
+
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png")
+    plt.close()
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode("utf-8")
+    return img_base64
 
 def plot_confusion_matrix(cm, title):
     """
@@ -209,7 +230,8 @@ def evaluation() -> str:
     xgb_roc_img = plot_roc_curve(y_true, xgb_proba, "XGBoost ROC Curve")
     rf_pr_img = plot_pr_curve(y_true, rf_proba, "Random Forest Precision-Recall Curve")
     xgb_pr_img = plot_pr_curve(y_true, xgb_proba, "XGBoost Precision-Recall Curve")
-
+    feature_importance_img = plot_feature_importances(rf_model, xgb_model, trained_features)
+    
     # ------------------------------------------------------------------
     # SUMMARY STATISTICS FOR TEMPLATES
     # ------------------------------------------------------------------
@@ -256,7 +278,7 @@ def evaluation() -> str:
         data_descriptions=DATA_DESCRIPTIONS,
         all_columns=all_columns,
         used_for_training=used_for_training,
-        fraud_rule_description=FRAUD_RULE_DESCRIPTION
+        feature_importance_img=feature_importance_img
     )
 
 @app.route("/download-data")
