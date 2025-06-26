@@ -1,0 +1,180 @@
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from model import (
+    split_data, rf_feature_selection, l1_feature_selection,
+    train_xgboost, train_xgboost_gridsearch, evaluate_model
+)
+
+df = pd.read_csv("cleaned_insurance_claims.csv")
+target_col = "fraud_reported"
+feature_cols = [c for c in df.columns if c != target_col]
+
+MODEL_OPTIONS = ["XGBoost"]
+FS_METHODS = ["Manual", "Random Forest", "L1 (Lasso)"]
+XGB_MODES = ["No", "Gridsearch"]
+RF_THRESHOLDS = [
+    ("Median (default)", "median"),
+    ("Mean", "mean"),
+    ("Top 25% (0.75*mean)", "0.75*mean"),
+    ("Top 50% (0.5*mean)", "0.5*mean"),
+    ("Top 75% (0.25*mean)", "0.25*mean"),
+]
+MAX_WORKFLOWS = 4
+
+# Session state for workflow count and workflow ids
+if "workflow_ids" not in st.session_state:
+    st.session_state["workflow_ids"] = [1]
+
+def next_wf_id():
+    if "next_wf_id" not in st.session_state:
+        st.session_state["next_wf_id"] = 2
+    val = st.session_state["next_wf_id"]
+    st.session_state["next_wf_id"] += 1
+    return val
+
+st.title("Claims Fraud Detection: Compare Custom Workflows")
+st.write("Set up and compare up to 4 custom modeling workflows side-by-side.")
+
+# Add workflow button, centered and wide
+add_col1, add_col2, add_col3 = st.columns([1,2,1])
+with add_col2:
+    if len(st.session_state["workflow_ids"]) < MAX_WORKFLOWS:
+        if st.button("➕ Add Workflow", key="add_wf", use_container_width=True):
+            st.session_state["workflow_ids"].append(next_wf_id())
+
+def render_classification_report(report_dict, title="Classification Report"):
+    st.subheader(title)
+    report_df = pd.DataFrame(report_dict).T
+    st.dataframe(report_df.style.format(precision=2))
+
+def plot_confusion_matrix(cm, class_labels, title="Confusion Matrix"):
+    st.subheader(title)
+    fig, ax = plt.subplots()
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax, xticklabels=class_labels, yticklabels=class_labels)
+    ax.set_xlabel('Predicted')
+    ax.set_ylabel('Actual')
+    st.pyplot(fig)
+
+def plot_importances(importances_df, title="Feature Importances"):
+    st.subheader(title)
+    fig, ax = plt.subplots(figsize=(8, min(0.5 * len(importances_df), 8)))
+    sns.barplot(data=importances_df, x="importance", y="feature", ax=ax, color="royalblue")
+    ax.set_title(title)
+    st.pyplot(fig)
+
+def get_workflow_config(workflow_num, workflow_id, allow_remove):
+    st.markdown(f"#### Workflow {workflow_num+1} Settings")
+    model_choice = st.selectbox(f"Workflow {workflow_num+1}: Training model", MODEL_OPTIONS, key=f"model_{workflow_id}")
+    fs_choice = st.selectbox(f"Workflow {workflow_num+1}: Feature selection method", FS_METHODS, key=f"fs_{workflow_id}")
+    features_to_use = feature_cols
+    rf_threshold = RF_THRESHOLDS[0][1]
+    l1_alpha = 0.01
+
+    if fs_choice == "Manual":
+        features_to_use = st.multiselect(
+            f"Workflow {workflow_num+1}: Select features to keep",
+            feature_cols, default=feature_cols, key=f"mf_{workflow_id}"
+        )
+    elif fs_choice == "Random Forest":
+        rf_label_to_value = {label: value for label, value in RF_THRESHOLDS}
+        rf_label = st.selectbox(
+            f"Workflow {workflow_num+1}: RF feature importance threshold",
+            [label for label, value in RF_THRESHOLDS],
+            index=0,
+            key=f"rfthresh_{workflow_id}"
+        )
+        rf_threshold = rf_label_to_value[rf_label]
+    elif fs_choice == "L1 (Lasso)":
+        l1_alpha = st.number_input(
+            f"Workflow {workflow_num+1}: L1 regularization strength (alpha)",
+            min_value=0.0001, max_value=1.0, value=0.01, step=0.01, key=f"l1alpha_{workflow_id}"
+        )
+
+    hypertune_choice = st.selectbox(
+        f"Workflow {workflow_num+1}: Use hyperparameter tuning?",
+        XGB_MODES,
+        index=0,
+        key=f"ht_{workflow_id}"
+    )
+
+    remove_clicked = False
+    if allow_remove:
+        if st.button("Remove Workflow", key=f"remove_wf_{workflow_id}"):
+            remove_clicked = True
+
+    return {
+        "model": model_choice,
+        "fs_method": fs_choice,
+        "features": features_to_use,
+        "rf_threshold": rf_threshold,
+        "l1_alpha": l1_alpha,
+        "hypertune": hypertune_choice,
+        "remove_clicked": remove_clicked,
+        "workflow_id": workflow_id
+    }
+
+# Workflow configuration UIs
+workflow_configs = []
+remove_indices = []
+for i, workflow_id in enumerate(st.session_state["workflow_ids"]):
+    allow_remove = len(st.session_state["workflow_ids"]) > 1
+    cfg = get_workflow_config(i, workflow_id, allow_remove)
+    workflow_configs.append(cfg)
+    if cfg["remove_clicked"]:
+        remove_indices.append(i)
+    st.markdown("---")
+
+# Remove any workflows requested for removal
+if remove_indices:
+    for idx in sorted(remove_indices, reverse=True):
+        del st.session_state["workflow_ids"][idx]
+    st.experimental_rerun()
+
+if st.button("Compare Workflows"):
+    compare_results = []
+    for i, cfg in enumerate(workflow_configs):
+        with st.spinner(f"Running Workflow {i+1}..."):
+            X_train, X_test, y_train, y_test = split_data(df, feature_cols, target_col)
+            importances_df = None
+            if cfg["fs_method"] == "Manual":
+                if len(cfg["features"]) == 0:
+                    st.error(f"Please select at least one feature for Workflow {i+1}.")
+                    st.stop()
+                X_train, X_test, y_train, y_test = split_data(df, cfg["features"], target_col)
+                X_train_fs, X_test_fs = X_train, X_test
+            elif cfg["fs_method"] == "Random Forest":
+                X_train_fs, X_test_fs, selected_features, rf, importances_df = rf_feature_selection(
+                    X_train, y_train, X_test, threshold=cfg["rf_threshold"]
+                )
+            elif cfg["fs_method"] == "L1 (Lasso)":
+                X_train_fs, X_test_fs, selected_features, l1, importances_df = l1_feature_selection(
+                    X_train, y_train, X_test, alpha=cfg["l1_alpha"]
+                )
+            # Modeling
+            if cfg["hypertune"] == "No":
+                model, y_pred = train_xgboost(X_train_fs, y_train, X_test_fs)
+            else:
+                model, y_pred, _ = train_xgboost_gridsearch(X_train_fs, y_train, X_test_fs, y_test)
+            report, cm, acc = evaluate_model(y_test, y_pred)
+            compare_results.append({
+                "Workflow": f"Workflow {i+1}",
+                "Accuracy": acc,
+                "Report": report,
+                "Confusion": cm,
+                "Model": model,
+                "Class Labels": model.classes_,
+                "Importances": importances_df
+            })
+
+    # Tabs for detailed output
+    tabs = st.tabs([f"Workflow {i+1}" for i in range(len(compare_results))])
+    for i, res in enumerate(compare_results):
+        with tabs[i]:
+            st.write(f"**{res['Workflow']}**")
+            st.write(f"**Accuracy:** {res['Accuracy']:.3f}")
+            render_classification_report(res["Report"])
+            plot_confusion_matrix(res["Confusion"], res["Class Labels"])
+            if res["Importances"] is not None:
+                plot_importances(res["Importances"], title="Feature Importances")
