@@ -133,7 +133,7 @@ for i, workflow_id in enumerate(st.session_state["workflow_ids"]):
 if remove_indices:
     for idx in sorted(remove_indices, reverse=True):
         del st.session_state["workflow_ids"][idx]
-    st.experimental_rerun()
+    st.rerun()
 
 def run_workflow(cfg):
     """Runs a single workflow config and returns the result dict."""
