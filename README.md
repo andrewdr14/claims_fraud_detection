@@ -11,12 +11,9 @@ This project is an educational resource for understanding and experimenting with
 - [Project Structure](#project-structure)
 - [Installation](#installation)
 - [Environment Variables](#environment-variables)
-- [Running the Application](#running-the-application)
-- [Running Tests](#running-tests)
+- [Workflow: How to Use This Repo](#workflow-how-to-use-this-repo)
 - [Database: MongoDB](#database-mongodb)
 - [Contributing](#contributing)
-- [Limitations](#limitations)
-- [License](#license)
 
 ---
 
@@ -24,12 +21,10 @@ This project is an educational resource for understanding and experimenting with
 
 This repository demonstrates a complete workflow for detecting fraudulent insurance claims using machine learning, including:
 
-- **Data generation and preprocessing** (with `data_generator.py`)
-- **Model training and evaluation** (with `model.py`)
-- **Web API for fraud prediction** (with `app.py`, using Flask)
+- **Exploratory Data Analysis and Preprocessing** (with Jupyter notebook)
+- **Model training, feature selection, evaluation, and reporting** (with `model.py`)
+- **Interactive dashboard and visualizations** (with Streamlit, `app.py`)
 - **Storing and retrieving data via MongoDB**
-- **Unit tests for data generation**
-- **Interactive dashboard and visualizations**
 
 It is intended as a **learning tool**, so code and documentation are designed for clarity and exploration.
 
@@ -38,14 +33,14 @@ It is intended as a **learning tool**, so code and documentation are designed fo
 ## Key Technologies Used
 
 - **Python 3.10+** (3.10 or 3.11 strongly recommended)
-- **Flask**: Lightweight web framework for building the API (`app.py`)
+- **Jupyter Notebook**: EDA and data preparation
+- **Streamlit**: Interactive dashboard for results visualization
 - **MongoDB**: NoSQL database for storing claims data and predictions
 - **pymongo**: Python driver for MongoDB
 - **scikit-learn**: Machine learning models and utilities
 - **xgboost**: Advanced gradient boosting model
-- **pytest**: For running unit tests (currently focused on `data_generator.py`)
 - **matplotlib**: For result visualization
-- **Faker**: For generating realistic synthetic claim data
+- **python-dotenv**: For `.env` config management
 
 ---
 
@@ -56,14 +51,13 @@ claims_fraud_detection/
 │
 ├── claims_fraud/                  
 │   ├── __init__.py
-│   ├── data_generator.py          # Scripts for generating synthetic claims data
-│   ├── model.py                   # Model training, saving, and loading logic
-│   ├── app.py                     # Flask web API for predictions
-│   └── ...                        # (other modules)
+│   ├── model.py                   # Model training, feature selection, and reporting logic
+│   ├── app.py                     # Streamlit web dashboard for visualizations
+│   ├── eda_and_cleaning.ipynb     # Jupyter notebook for EDA and data cleaning
+│   └── cleaned_insurance_claims.csv # Cleaned data produced by Jupyter notebook
+|   └── insurance_claims.csv # Raw data used for the project
 │
 ├── requirements.txt               # Python dependencies
-├── tests/                         # Unit tests (currently for data_generator.py)
-│   └── test_data_generator.py
 ├── README.md
 └── ...
 ```
@@ -78,7 +72,7 @@ claims_fraud_detection/
 1. **Clone the repository:**
     ```bash
     git clone https://github.com/andrewdr14/claims_fraud_detection.git
-    cd claims_fraud_detection
+    cd claims_fraud_detection/claims_fraud
     ```
 
 2. **(Recommended) Create and activate a virtual environment:**
@@ -104,7 +98,7 @@ claims_fraud_detection/
 
 ## Environment Variables
 
-The application expects a MongoDB connection string to be set in a `.env` file in the project root directory.
+The application expects a MongoDB connection string to be set in a `.env` file in the `claims_fraud` directory (where `model.py` and `app.py` reside).
 
 **Example `.env` file:**
 ```
@@ -114,51 +108,52 @@ Replace the value with your actual MongoDB connection details.
 
 ---
 
-## Running the Application
+## Workflow: How to Use This Repo
 
-### 1. Generate Synthetic Data
-
-Run the data generator to populate your MongoDB with synthetic claims data:
-
+#### 1. **Clone the repository**
 ```bash
-python -m claims_fraud.data_generator
+git clone https://github.com/andrewdr14/claims_fraud_detection.git
+cd claims_fraud_detection/claims_fraud
 ```
 
-### 2. Train Models
+#### 2. **Set up your environment**
+- *(See [Installation](#installation) above)*
 
-Train and save the machine learning models:
+#### 3. **Open and run the Jupyter Notebook for EDA and Data Cleaning**
+- Start Jupyter in your terminal:
+    ```bash
+    jupyter notebook
+    ```
+- Open `eda_and_cleaning.ipynb`
+- **Run all cells** to:
+    - Explore and clean the data
+    - Encode categorical variables
+    - Save `cleaned_insurance_claims.csv` and `categorical_mappings.pkl` in your local directory
 
+#### 4. **Set up your MongoDB environment file**
+- Create a `.env` file in the `claims_fraud` directory and add your MongoDB connection string as shown above.
+
+#### 5. **Run the modeling pipeline**
 ```bash
-python -m claims_fraud.model
+python model.py
 ```
+- This will:
+    - Perform feature selection and modeling
+    - Save all output files (plots, reports, etc.) in your local directory for dashboard use
 
-### 3. Start the Flask API
-
-Launch the web API to serve predictions and visualizations:
-
+#### 6. **Launch the Streamlit dashboard**
 ```bash
-python -m claims_fraud.app
+streamlit run app.py
 ```
-The API will be available at [http://localhost:8080](http://localhost:8080) by default.
-
----
-
-## Running Tests
-
-Unit tests are provided for the data generation logic (and can be extended for other modules).
-
-To run all tests:
-```bash
-pytest
-```
+- The browser will open the dashboard with all results and visualizations.
 
 ---
 
 ## Database: MongoDB
 
-- Synthetic claim data and predictions are stored in MongoDB.
+- Synthetic or cleaned claim data and model predictions are stored in MongoDB.
 - The application expects a MongoDB connection string as `MONGO_URI` in your `.env`.
-- By default, a local MongoDB instance on `localhost:27017` is expected, but you can adjust this for remote or cloud MongoDB setups.
+- By default, a local MongoDB instance on `localhost:27017` is expected, but you can adjust this for remote/cloud MongoDB.
 
 ---
 
@@ -170,32 +165,3 @@ Suggestions, improvements, and contributions are highly welcome!
 - Fork the repo and submit a pull request.
 - Open issues for bugs, questions, or feature requests.
 - Ideas for new data features, model types, or explanatory materials are especially encouraged.
-
----
-
-## Limitations
-
-**This project is a learning tool with important limitations:**
-
-- **Synthetic Data and Labels:**  
-  All data is artificially generated using a mixture of business rules and randomness. Most fraudulent claims are labeled based on a small set of simple, transparent rules; a minority are labeled as fraud randomly (to simulate error/noise), and some true frauds are missed at random (simulating false negatives).
-
-- **Feature–Label Leakage:**  
-  The same features used to assign fraud labels are also used for model training. In real-world scenarios, the true fraud labels are not a direct function of input features, and "label leakage" is much less likely.
-
-- **Clean Data:**  
-  The synthetic data is well-formed, with no missing values, typos, or real-world messiness.
-
-- **Class Balance:**  
-  The proportion of fraudulent cases can be set arbitrarily; real insurance fraud is fairly rare.
-
-- **No Adversarial Examples:**  
-  In reality, fraudsters adapt and try to evade detection. Here, there is no such adversarial activity.
-
-- **Overoptimistic Model Performance:**  
-  Because of the above, models achieve unrealistically high metrics (precision, recall, ROC-AUC, etc.).  
-  Real claims fraud detection is much more difficult, with far more subtle signals and noise.
-
----
-
-**Suggestions & improvements are welcome!**
