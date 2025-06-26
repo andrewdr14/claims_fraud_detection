@@ -112,7 +112,3 @@ The dataset consists of anonymized insurance claim records, including:
 - XGBoost documentation: https://xgboost.readthedocs.io/
 
 ---
-
-## License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
