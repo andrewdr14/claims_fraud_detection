@@ -1,0 +1,9 @@
+Aim is to create an interactive tool.
+
+1. Users can have a choice
+  a) Choose their own features for XGBoost to train on
+  b) Choose an ML model to do feature engineering for them, then XGBoost is trained
+
+2. Depending on choice, users will see updated metrics
+
+3. Future development will allow users to choose from other options, such as tools to deal with feature imbalances.
