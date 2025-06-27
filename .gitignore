@@ -4,3 +4,7 @@
 __pycache__/
 
 claims_fraud/.Rhistory
+*.tfevents
+*.tsv
+*.json
+*.tmp
