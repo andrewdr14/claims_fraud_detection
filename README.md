@@ -1,5 +1,15 @@
 # Claims Fraud Detection
 
+UNDER CONSTRUCTION:
+
+To use this repo quickly
+   1. Clone it and change to the directory \...\claims_fraud
+   2. Do "jupyter notebook" in bash to understood the data preprocessing methodology
+   3. Then, run "streamlit run interactive_app.py" to access the web app and run different models.
+   4. You can view model.py in an IDE, if interested. This, of course, is the bulk of the modelling, ML algorithms,              train/tests etc...
+
+
+
 A machine learning project for detecting fraudulent insurance claims. This repository contains code and notebooks for data exploration, feature engineering, model training, evaluation, and dashboard visualizations. The workflow leverages ensemble learning techniques, hyperparameter optimization, and interpretable outputs to deliver a robust fraud detection pipeline.
 
 ---
