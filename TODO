@@ -1,5 +1,7 @@
 Aim is to create an interactive tool.
 
+26/06/2025
+
 1. Users can have a choice
   a) Choose their own features for XGBoost to train on
   b) Choose an ML model to do feature engineering for them, then XGBoost is trained
@@ -7,3 +9,24 @@ Aim is to create an interactive tool.
 2. Depending on choice, users will see updated metrics
 
 3. Future development will allow users to choose from other options, such as tools to deal with feature imbalances.
+
+Completed above as of 27/06/2025
+
+27/06/2025
+
+1. Clean up site in terms of UI - we want the user to not have to scroll so much
+ a) Idea is that, when you add a workflow, you can scroll right to modify it
+ b) Then, press compare workflows
+ c) After this, results appear. I want to make it so that you can cross compare results easier
+    An aim is that, each graph/evalution medium can refer to whichever workflow we want
+    So we could be viewing Workflow 1's classification report, but at the same time, Workflow 2's confusion matrix
+
+2. Create another page outlining what this project is for. We could expand this out; use it to host other machine learning 
+    projects I do, and make it a hub for comparing their performance across different projects.
+
+3. Possibly look into dealing with feature imbalance; its evident from viewing evaluations of the models that there is a 
+    bias towards No Fraud, as this dominates the dataset. 
+
+4. The user should be able to download the original dataset, get access to the Jupyter notebook from the website, and then 
+   see how that transforms the data, and then be able to download it.
+

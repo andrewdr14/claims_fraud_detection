@@ -1,124 +1,166 @@
 # Claims Fraud Detection
 
-UNDER CONSTRUCTION:
-
-To use this repo quickly
-   1. Clone it and change to the directory \...\claims_fraud
-   2. Do "jupyter notebook" in bash to understood the data preprocessing methodology
-   3. Then, run "streamlit run interactive_app.py" to access the web app and run different models.
-   4. You can view model.py in an IDE, if interested. This, of course, is the bulk of the modelling, ML algorithms,              train/tests etc...
-
-
-
-A machine learning project for detecting fraudulent insurance claims. This repository contains code and notebooks for data exploration, feature engineering, model training, evaluation, and dashboard visualizations. The workflow leverages ensemble learning techniques, hyperparameter optimization, and interpretable outputs to deliver a robust fraud detection pipeline.
+A machine learning project focused on detecting fraudulent insurance claims. This repository provides a comprehensive pipeline from data exploration and feature engineering to model training, evaluation, and an interactive Streamlit dashboard for comparing different ML workflows.
 
 ---
 
-## Contents
+## Table of Contents
 
 - [Project Overview](#project-overview)
-- [Data Description](#data-description)
+- [Features](#features)
+- [Project Structure](#project-structure)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Machine Learning Theory and Modeling Workflow](#machine-learning-theory-and-modeling-workflow)
+  - [Exploratory Data Analysis (Jupyter Notebook)](#exploratory-data-analysis-jupyter-notebook)
+  - [Interactive Application (Streamlit)](#interactive-application-streamlit)
+- [Machine Learning Workflow](#machine-learning-workflow)
+- [Improvements](#improvements)
 - [References](#references)
-- [License](#license)
 
 ---
 
 ## Project Overview
 
-Insurance fraud is a significant challenge in the industry, leading to substantial financial losses each year. This project aims to build a machine learning pipeline that accurately identifies potentially fraudulent claims, using advanced modeling techniques and careful feature selection.
+Insurance fraud poses a significant challenge to the industry. This project aims to leverage machine learning to accurately identify potentially fraudulent claims. It provides a practical demonstration of building an end-to-end fraud detection system, emphasizing advanced modeling techniques and careful feature selection.
 
-Key steps include:
+Key aspects include:
 - Data preprocessing and cleaning
-- Exploratory Data Analysis (EDA)
-- Feature selection using Random Forest
-- Model training using XGBoost
-- Hyperparameter tuning with GridSearchCV
-- Final model evaluation and deployment
+- Exploratory Data Analysis (EDA) to understand data characteristics
+- Feature selection using various methods (Random Forest, L1 Regularization)
+- Model training with robust algorithms like XGBoost and CatBoost
+- Hyperparameter tuning with GridSearchCV for optimal performance
+- An interactive Streamlit application for side-by-side comparison of different ML workflows.
 
 ---
 
-## Data Description
+## Features
 
-The dataset consists of anonymized insurance claim records, including:
-- Categorical and numerical policyholder features
-- Claim details (e.g. amount, type, timing)
-- Labeled outcome indicating whether the claim was fraudulent
+- **Interactive Streamlit App**: Compare multiple machine learning workflows, including different models, feature selection methods, hyperparameter tuning strategies, and imbalance handling techniques.
+- **Comprehensive ML Pipeline**: Demonstrates data splitting, feature selection, model training, and evaluation.
+- **Imbalance Handling**: Includes techniques like Random Oversampling, SMOTE, and Class Weighting to address imbalanced datasets common in fraud detection.
+- **Detailed EDA**: A Jupyter Notebook provides in-depth data exploration, cleaning, and feature engineering steps.
+- **Model Comparison**: Easily visualize and compare performance metrics (accuracy, classification reports, confusion matrices) of different models.
+- **Configurable Randomness**: Allows users to set a `random_state` for reproducibility or to observe variations in model training.
+
+---
+
+## Project Structure
+
+```
+claims_fraud_detection/
+│
+├── claims_fraud/
+│   ├── __init__.py
+│   ├── cleaned_insurance_claims.csv
+│   ├── eda_insurance_claims_cleaned.ipynb
+│   ├── insurance_claims.csv
+│   ├── interactive_app.py (Note: Main app is Home.py, this is a placeholder/legacy reference)
+│   └── model.py
+│
+├── pages/
+│   ├── 1_Compare_Workflows.py
+│   ├── 2_Data_Explorer.py
+│   └── 3_Concepts.py
+│
+├── .gitignore
+├── Home.py
+├── README.md
+├── requirements.txt
+└── TODO
+```
+
+- **`claims_fraud/`**: Contains core ML scripts and data.
+  - **`eda_insurance_claims_cleaned.ipynb`**: Jupyter Notebook for EDA, data cleaning, and feature engineering.
+  - **`model.py`**: Core functions for data splitting, feature selection, model training (XGBoost, CatBoost), and evaluation.
+  - **`insurance_claims.csv`**: The raw dataset.
+  - **`cleaned_insurance_claims.csv`**: The cleaned and preprocessed dataset.
+- **`pages/`**: Streamlit application pages.
+  - **`1_Compare_Workflows.py`**: The main interactive page for comparing ML workflows.
+  - **`2_Data_Explorer.py`**: Page for exploring the raw and cleaned datasets with visualizations.
+  - **`3_Concepts.py`**: Explanations of machine learning concepts used in the project.
+- **`Home.py`**: The main entry point for the Streamlit multi-page application.
+- **`requirements.txt`**: Lists all Python dependencies.
 
 ---
 
 ## Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/andrewdr14/claims_fraud_detection.git
-   cd claims_fraud_detection
-   ```
-2. Install dependencies (Python 3.8+ recommended):
-   ```bash
-   pip install -r requirements.txt
-   ```
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/andrewdr14/claims_fraud_detection.git
+    cd claims_fraud_detection
+    ```
 
-3. To use Jupyter notebooks:
-   ```bash
-   pip install jupyter
-   ```
+2.  **Install dependencies** (Python 3.8+ recommended):
+    ```bash
+    pip install -r requirements.txt
+    ```
 
 ---
 
 ## Usage
 
-- **Data exploration and cleaning:**
-  - Run `eda_and_cleaning.ipynb` for an overview of data preprocessing, feature engineering, and statistical analysis.
+There are two primary ways to interact with this project:
 
-- **Model training and evaluation:**
-  - Execute `model.py` or the accompanying notebook to:
-    - Select features with Random Forest
-    - Train XGBoost models
-    - Optimize hyperparameters with GridSearchCV
-    - Evaluate model performance
+### 1. Exploratory Data Analysis (Jupyter Notebook)
 
-- **Dashboard:**
-  - Launch the dashboard app (if provided) to visualize predictions, feature importances, and other metrics.
+To delve into the data preprocessing, feature engineering, and initial statistical analysis, run the Jupyter Notebook:
+
+1.  **Navigate to the `claims_fraud` directory:**
+    ```bash
+    cd claims_fraud
+    ```
+
+2.  **Start Jupyter Notebook:**
+    ```bash
+    jupyter notebook
+    ```
+
+3.  In the Jupyter interface, open `eda_insurance_claims_cleaned.ipynb`.
+
+### 2. Interactive Application (Streamlit)
+
+The main interactive component is the Streamlit application, which allows you to compare different machine learning models and feature selection techniques in real-time.
+
+1.  **Ensure you are in the root directory of the project (`claims_fraud_detection`):**
+    ```bash
+    cd claims_fraud_detection
+    ```
+
+2.  **Run the Streamlit app:**
+    ```bash
+    streamlit run Home.py
+    ```
+
+This command will open the interactive dashboard in your web browser, typically at `http://localhost:8501`.
 
 ---
 
-## Machine Learning Theory and Modeling Workflow
+## Machine Learning Workflow
 
-### Model Theory
+This project implements a robust ML workflow:
 
-- **Random Forest (RF):**  
-  Random Forest is an ensemble learning method that builds multiple decision trees and merges their results to improve accuracy and control overfitting. It handles non-linear relationships well and is robust to noise and outliers. In this project, Random Forest is used specifically for **feature selection**, ranking the importance of input variables and helping to reduce dimensionality before further modeling.
+-   **Data Splitting**: Divides data into training and testing sets.
+-   **Feature Selection**: Utilizes Random Forest importance and L1 (Lasso) regularization to identify and select the most impactful features.
+-   **Imbalance Handling**: Addresses class imbalance using techniques like Random Oversampling, SMOTE, or Class Weighting to improve minority class prediction.
+-   **Model Training**: Employs powerful gradient boosting algorithms:
+    -   **XGBoost (Extreme Gradient Boosting)**: Known for its performance and speed.
+    -   **CatBoost**: Excels at handling categorical features natively.
+-   **Hyperparameter Tuning**: Uses GridSearchCV to find optimal model parameters.
+-   **Evaluation**: Models are assessed using standard metrics such as accuracy, classification reports, and confusion matrices.
 
-- **XGBoost (Extreme Gradient Boosting):**  
-  XGBoost is an advanced and efficient implementation of gradient-boosted trees, designed for speed and performance. It builds trees sequentially, where each new tree corrects errors from the previous ones, and includes regularization to prevent overfitting. XGBoost is particularly effective for structured, tabular data and is widely used in machine learning competitions.
+---
 
-- **GridSearchCV:**  
-  GridSearchCV is a hyperparameter optimization technique from scikit-learn. It exhaustively searches over specified parameter values for an estimator, using cross-validation to evaluate model performance for each parameter combination. This process ensures that the chosen model has the most effective configuration for the task.
+## Improvements
 
-### Modeling Workflow in This Project
-
-1. **Feature Selection with Random Forest:**  
-   After data preprocessing and cleaning, a Random Forest classifier is trained to evaluate the importance of each feature. The top-ranked features are selected for downstream modeling, which helps improve model accuracy and reduces computational cost.
-
-2. **Initial XGBoost Modeling:**  
-   XGBoost is trained using the selected features from the Random Forest step. This creates a strong baseline model and helps highlight which hyperparameters may benefit from further tuning.
-
-3. **Hyperparameter Tuning with GridSearchCV:**  
-   The XGBoost model is wrapped with GridSearchCV to systematically explore combinations of hyperparameters (such as learning rate, tree depth, etc.). This step identifies the most effective configuration for the XGBoost algorithm on the fraud detection dataset.
-
-4. **Final Modeling with XGBoost:**  
-   Using the best hyperparameters found by GridSearchCV, XGBoost is retrained on the data to produce the final, optimized model. The performance of this model is then evaluated and visualized as part of the project output.
+-   **Configurable Random State**: The `random_state` for data splitting, feature selection, and model training is now configurable within the Streamlit app, allowing for more flexible experimentation and verification of model behavior.
 
 ---
 
 ## References
 
-- Breiman, L. (2001). Random Forests. Machine Learning, 45(1), 5–32.
-- Chen, T., & Guestrin, C. (2016). XGBoost: A Scalable Tree Boosting System. Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining.
-- scikit-learn documentation: https://scikit-learn.org/
-- XGBoost documentation: https://xgboost.readthedocs.io/
-
----
+-   Breiman, L. (2001). Random Forests. Machine Learning, 45(1), 5–32.
+-   Chen, T., & Guestrin, C. (2016). XGBoost: A Scalable Tree Boosting System. Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining.
+-   scikit-learn documentation: https://scikit-learn.org/
+-   XGBoost documentation: https://xgboost.readthedocs.io/
+-   CatBoost documentation: https://catboost.ai/
