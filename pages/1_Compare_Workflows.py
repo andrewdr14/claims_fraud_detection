@@ -55,7 +55,7 @@ def render_classification_report(report_dict: dict, title: str = "Classification
 
 def plot_confusion_matrix(cm: np.ndarray, class_labels: list, title: str = "Confusion Matrix"):
     st.subheader(title)
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(4, 3))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax, xticklabels=class_labels, yticklabels=class_labels)
     ax.set_xlabel('Predicted')
     ax.set_ylabel('Actual')
@@ -63,8 +63,9 @@ def plot_confusion_matrix(cm: np.ndarray, class_labels: list, title: str = "Conf
 
 def plot_importances(importances_df: pd.DataFrame, title: str = "Feature Importances"):
     st.subheader(title)
-    fig, ax = plt.subplots(figsize=(8, min(0.5 * len(importances_df), 8)))
-    sns.barplot(data=importances_df, x="importance", y="feature", ax=ax, color="royalblue")
+    top_10_df = importances_df.nlargest(10, 'importance')
+    fig, ax = plt.subplots(figsize=(6, 4))
+    sns.barplot(data=top_10_df, x="importance", y="feature", ax=ax, color="royalblue")
     ax.set_title(title)
     st.pyplot(fig)
 
@@ -125,9 +126,13 @@ def run_workflow(cfg: dict) -> dict:
         details["features"] = cfg["features"]
     elif cfg["fs_method"] in ["Random Forest", "L1 (Lasso)"]:
         method = "Random Forest" if cfg["fs_method"] == "Random Forest" else "L1"
+        
+        # Get the threshold for Random Forest
+        rf_threshold = cfg.get("rf_threshold")
+        
         X_train_fs, X_test_fs, _, _, importances_df = feature_selection(
             method, X_train, y_train, X_test,
-            threshold=cfg.get("rf_threshold"), alpha=cfg.get("l1_alpha"), random_state=random_state
+            threshold=rf_threshold, alpha=cfg.get("l1_alpha"), random_state=random_state
         )
         details.update({k: v for k, v in cfg.items() if k in ["rf_threshold", "l1_alpha"]})
     else:
@@ -268,29 +273,27 @@ if st.session_state["results"]:
         st.subheader("Comparison Summary")
         st.dataframe(summary_df.style.highlight_max(axis=0, subset=['Accuracy'], color='lightgreen'))
 
-    # Create a list of workflow options for selectboxes
-    workflow_options = [f"Workflow {i+1}" for i in range(len(st.session_state["results"]))]
-
     with main_tabs[1]: # Classification Report Tab
-        st.subheader("Classification Report")
-        selected_wf_report = st.selectbox("Select Workflow for Report", workflow_options, key="select_report_wf")
-        selected_index_report = workflow_options.index(selected_wf_report)
-        res_report = st.session_state["results"][selected_index_report]
-        render_classification_report(res_report["Report"], title=f"Classification Report for {selected_wf_report}")
+        st.subheader("Classification Reports")
+        for i, res in enumerate(st.session_state["results"]):
+            with st.expander(f"View Classification Report for Workflow {i+1}"):
+                render_classification_report(res["Report"], title="")
 
     with main_tabs[2]: # Confusion Matrix Tab
         st.subheader("Confusion Matrix")
-        selected_wf_cm = st.selectbox("Select Workflow for Confusion Matrix", workflow_options, key="select_cm_wf")
-        selected_index_cm = workflow_options.index(selected_wf_cm)
-        res_cm = st.session_state["results"][selected_index_cm]
-        plot_confusion_matrix(res_cm["Confusion"], res_cm["Class Labels"], title=f"Confusion Matrix for {selected_wf_cm}")
+        cols = st.columns(len(st.session_state["results"]))
+        for i, col in enumerate(cols):
+            with col:
+                res = st.session_state["results"][i]
+                plot_confusion_matrix(res["Confusion"], res["Class Labels"], title=f"Workflow {i+1}")
 
     with main_tabs[3]: # Feature Importances Tab
         st.subheader("Feature Importances")
-        selected_wf_fi = st.selectbox("Select Workflow for Feature Importances", workflow_options, key="select_fi_wf")
-        selected_index_fi = workflow_options.index(selected_wf_fi)
-        res_fi = st.session_state["results"][selected_index_fi]
-        if res_fi["Importances"] is not None:
-            plot_importances(res_fi["Importances"], title=f"Feature Importances for {selected_wf_fi}")
-        else:
-            st.info("Feature importances are not available for this workflow (e.g., Manual feature selection). ")
+        cols = st.columns(len(st.session_state["results"]))
+        for i, col in enumerate(cols):
+            with col:
+                res = st.session_state["results"][i]
+                if res["Importances"] is not None:
+                    plot_importances(res["Importances"], title=f"Workflow {i+1}")
+                else:
+                    st.info(f"Importances not available for Workflow {i+1}")
