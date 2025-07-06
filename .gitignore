@@ -8,3 +8,9 @@ claims_fraud/.Rhistory
 *.tsv
 *.json
 *.tmp
+claims_fraud/.ipynb_checkpoints/__init__-checkpoint.py
+claims_fraud/.ipynb_checkpoints/eda_insurance_claims_cleaned-checkpoint.ipynb
+claims_fraud/.ipynb_checkpoints/eda_insurance_claims_cleaned-checkpoint.ipynb
+claims_fraud/eda_insurance_claims_cleaned.ipynb
+claims_fraud/.ipynb_checkpoints/eda_insurance_claims_cleaned-checkpoint.ipynb
+claims_fraud/eda_insurance_claims_cleaned.ipynb
