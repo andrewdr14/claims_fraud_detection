@@ -54,7 +54,6 @@ claims_fraud_detection/
 │   ├── cleaned_insurance_claims.csv
 │   ├── eda_insurance_claims_cleaned.ipynb
 │   ├── insurance_claims.csv
-│   ├── interactive_app.py (Note: Main app is Home.py, this is a placeholder/legacy reference)
 │   └── model.py
 │
 ├── pages/
@@ -66,12 +65,11 @@ claims_fraud_detection/
 ├── Home.py
 ├── README.md
 ├── requirements.txt
-└── TODO
 ```
 
 - **`claims_fraud/`**: Contains core ML scripts and data.
   - **`eda_insurance_claims_cleaned.ipynb`**: Jupyter Notebook for EDA, data cleaning, and feature engineering.
-  - **`model.py`**: Core functions for data splitting, feature selection, model training (XGBoost, CatBoost), and evaluation.
+  - **`model.py`**: Core functions for data splitting, feature selection, model training and evaluation.
   - **`insurance_claims.csv`**: The raw dataset.
   - **`cleaned_insurance_claims.csv`**: The cleaned and preprocessed dataset.
 - **`pages/`**: Streamlit application pages.
@@ -138,7 +136,7 @@ This command will open the interactive dashboard in your web browser, typically 
 
 ## Machine Learning Workflow
 
-This project implements a robust ML workflow:
+This project implements an ML workflow:
 
 -   **Data Splitting**: Divides data into training and testing sets.
 -   **Feature Selection**: Utilizes Random Forest importance and L1 (Lasso) regularization to identify and select the most impactful features.
@@ -156,11 +154,3 @@ This project implements a robust ML workflow:
 -   **Configurable Random State**: The `random_state` for data splitting, feature selection, and model training is now configurable within the Streamlit app, allowing for more flexible experimentation and verification of model behavior.
 
 ---
-
-## References
-
--   Breiman, L. (2001). Random Forests. Machine Learning, 45(1), 5–32.
--   Chen, T., & Guestrin, C. (2016). XGBoost: A Scalable Tree Boosting System. Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining.
--   scikit-learn documentation: https://scikit-learn.org/
--   XGBoost documentation: https://xgboost.readthedocs.io/
--   CatBoost documentation: https://catboost.ai/
