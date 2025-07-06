@@ -121,7 +121,8 @@ def feature_selection(
         return X_train_fs, X_test_fs, selected_features, rf, importances_df
 
     elif method == "L1":
-        l1 = LogisticRegression(penalty="l1", solver="liblinear", C=1 / alpha, max_iter=2000, random_state=random_state)
+        l1 = LogisticRegression(penalty="l1", solver="liblinear", 
+                                C=1 / alpha, max_iter=2000, random_state=random_state)
         l1.fit(X_train, y_train)
 
         selector = SelectFromModel(l1, prefit=True)
@@ -195,7 +196,8 @@ def train_catboost_gridsearch(
         'l2_leaf_reg': [1, 3, 5]
     }
 
-    cb = CatBoostClassifier(random_state=random_state, verbose=False, class_weights=class_weights)
+    cb = CatBoostClassifier(random_state=random_state, verbose=False, 
+                            class_weights=class_weights)
     grid_search = GridSearchCV(estimator=cb, param_grid=param_grid, scoring='f1', n_jobs=-1, cv=3, verbose=0)
     grid_search.fit(X_train, y_train)
 
@@ -258,7 +260,6 @@ def train_xgboost_gridsearch(
         'subsample': [0.8, 1.0],
         'colsample_bytree': [0.8, 1.0]
     }
-
     xgb = XGBClassifier(eval_metric="logloss", random_state=random_state, n_jobs=-1, scale_pos_weight=scale_pos_weight)
     grid_search = GridSearchCV(estimator=xgb, param_grid=param_grid, scoring='f1', n_jobs=-1, cv=3, verbose=0)
     grid_search.fit(X_train, y_train)
@@ -288,3 +289,4 @@ def evaluate_model(
     accuracy = report["accuracy"]
     class_labels = sorted(list(y_test.unique())) # Get unique class labels from y_test
     return report, cm, accuracy, class_labels
+

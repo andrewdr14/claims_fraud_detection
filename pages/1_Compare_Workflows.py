@@ -1,8 +1,9 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.graph_objects as go
+import plotly.express as px
 import numpy as np
+
 
 from claims_fraud.model import (
     split_data,
@@ -54,20 +55,39 @@ def render_classification_report(report_dict: dict, title: str = "Classification
     st.dataframe(report_df.style.format(precision=2))
 
 def plot_confusion_matrix(cm: np.ndarray, class_labels: list, title: str = "Confusion Matrix"):
-    st.subheader(title)
-    fig, ax = plt.subplots(figsize=(4, 3))
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax, xticklabels=class_labels, yticklabels=class_labels)
-    ax.set_xlabel('Predicted')
-    ax.set_ylabel('Actual')
-    st.pyplot(fig)
+    fig = go.Figure(data=go.Heatmap(
+        z=cm,
+        x=class_labels,
+        y=class_labels,
+        colorscale='Blues',
+        text=cm,
+        texttemplate="%{text}"
+    ))
+    fig.update_layout(
+        title=title,
+        xaxis_title="Predicted",
+        yaxis_title="Actual",
+        width=500,
+        height=400
+    )
+    return fig
 
 def plot_importances(importances_df: pd.DataFrame, title: str = "Feature Importances"):
-    st.subheader(title)
     top_10_df = importances_df.nlargest(10, 'importance')
-    fig, ax = plt.subplots(figsize=(6, 4))
-    sns.barplot(data=top_10_df, x="importance", y="feature", ax=ax, color="royalblue")
-    ax.set_title(title)
-    st.pyplot(fig)
+    fig = px.bar(
+        top_10_df,
+        x="importance",
+        y="feature",
+        orientation='h',
+        title=title,
+        color_discrete_sequence=["royalblue"]
+    )
+    fig.update_layout(
+        yaxis={'categoryorder':'total ascending'},
+        width=600,
+        height=400
+    )
+    return fig
 
 def get_workflow_config(workflow_num: int, workflow_id: int, allow_remove: bool) -> dict:
     # Use a container for the workflow to apply border and consistent styling
@@ -106,6 +126,10 @@ def get_workflow_config(workflow_num: int, workflow_id: int, allow_remove: bool)
         imbalance_method = st.selectbox("Imbalance Handling", IMBALANCE_HANDLING_METHODS, key=f"imbalance_{workflow_id}")
         config["imbalance_method"] = imbalance_method
 
+        # Test size
+        test_size = st.slider("Test Size", 0.1, 0.5, 0.3, 0.05, key=f"test_size_{workflow_id}")
+        config["test_size"] = test_size
+
         # Add random state input
         random_state = st.number_input("Random State", value=42, step=1, key=f"random_state_{workflow_id}")
         config["random_state"] = random_state
@@ -115,24 +139,24 @@ def get_workflow_config(workflow_num: int, workflow_id: int, allow_remove: bool)
 # --- Core Logic ---
 def run_workflow(cfg: dict) -> dict:
     random_state = cfg.get("random_state", 42) # Get random_state from config, default to 42
-    X_train, X_test, y_train, y_test = split_data(df, feature_cols, target_col, random_state=random_state)
+    test_size = cfg.get("test_size", 0.3)
+    X_train, X_test, y_train, y_test = split_data(df, feature_cols, target_col, test_size=test_size, random_state=random_state)
     details = {}
     importances_df = None
+    selected_features = feature_cols
 
     # Feature Selection
     if cfg["fs_method"] == "Manual":
         if not cfg.get("features"): return {"error": "No features selected."}
-        X_train_fs, X_test_fs = X_train[cfg["features"]], X_test[cfg["features"]]
-        details["features"] = cfg["features"]
+        selected_features = cfg["features"]
+        X_train_fs, X_test_fs = X_train[selected_features], X_test[selected_features]
+        details["features"] = selected_features
     elif cfg["fs_method"] in ["Random Forest", "L1 (Lasso)"]:
         method = "Random Forest" if cfg["fs_method"] == "Random Forest" else "L1"
         
-        # Get the threshold for Random Forest
-        rf_threshold = cfg.get("rf_threshold")
-        
-        X_train_fs, X_test_fs, _, _, importances_df = feature_selection(
+        X_train_fs, X_test_fs, selected_features, _, importances_df = feature_selection(
             method, X_train, y_train, X_test,
-            threshold=rf_threshold, alpha=cfg.get("l1_alpha"), random_state=random_state
+            threshold=cfg.get("rf_threshold"), alpha=cfg.get("l1_alpha"), random_state=random_state
         )
         details.update({k: v for k, v in cfg.items() if k in ["rf_threshold", "l1_alpha"]})
     else:
@@ -171,7 +195,7 @@ def run_workflow(cfg: dict) -> dict:
         details["hypertune"] = "Gridsearch"
 
     report, cm, acc, class_labels = evaluate_model(y_test, y_pred)
-    return {"Accuracy": acc, "Report": report, "Confusion": cm, "Model": model, "Class Labels": class_labels, "Importances": importances_df, "Details": details, "Config": cfg} # Store the config
+    return {"Accuracy": acc, "Report": report, "Confusion": cm, "Model": model, "Class Labels": class_labels, "Importances": importances_df, "Details": details, "Config": cfg, "Features": selected_features} # Store the config and features
 
 # --- Main App ---
 st.title("Compare Machine Learning Workflows for Fraud Detection")
@@ -184,7 +208,8 @@ For detailed explanations of the concepts and techniques used here, please visit
 ### How to Use This Page:
 1.  **Configure Workflows:** Use the dropdowns and options in each workflow column to define your desired settings. You can add more workflows (up to 4) using the "➕ Add Workflow" button.
 2.  **Run Comparison:** Click the "Compare Workflows" button to train and evaluate all configured models.
-3.  **Analyze Results:** The results section below will display a summary table and detailed metrics (Classification Report, Confusion Matrix, Feature Importances) for each workflow. Use the dropdowns in the results tabs to cross-compare different metrics across your workflows.
+3.  **Analyze Results:** The results section below will display a summary table and detailed metrics for each workflow.
+4.  **Save Model:** In the "Summary" tab, you can save any workflow's trained model for later use on the "New Data" page.
 """)
 
 # --- Workflow Configuration ---
@@ -259,6 +284,7 @@ if st.session_state["results"]:
         summary_data[f"Workflow {i+1}"] = {
             "Model": cfg_stored.get("model", "N/A"), # Use stored model choice
             "Accuracy": f"{res.get('Accuracy', 0):.3f}",
+            "Test Size": f"{cfg_stored.get('test_size', 0.3):.2f}",
             "Feature Selection": fs_details,
             "Hyperparameter Tuning": cfg_stored.get("hypertune", "N/A"),
             "Imbalance Handling": cfg_stored.get("imbalance_method", "N/A")
@@ -273,6 +299,7 @@ if st.session_state["results"]:
         st.subheader("Comparison Summary")
         st.dataframe(summary_df.style.highlight_max(axis=0, subset=['Accuracy'], color='lightgreen'))
 
+
     with main_tabs[1]: # Classification Report Tab
         st.subheader("Classification Reports")
         for i, res in enumerate(st.session_state["results"]):
@@ -281,19 +308,30 @@ if st.session_state["results"]:
 
     with main_tabs[2]: # Confusion Matrix Tab
         st.subheader("Confusion Matrix")
-        cols = st.columns(len(st.session_state["results"]))
-        for i, col in enumerate(cols):
-            with col:
-                res = st.session_state["results"][i]
-                plot_confusion_matrix(res["Confusion"], res["Class Labels"], title=f"Workflow {i+1}")
+        if st.session_state["results"]:
+            workflow_options = [f"Workflow {i+1}" for i in range(len(st.session_state["results"]))]
+            selected_workflow_str = st.selectbox("Select Workflow to Display", workflow_options, key="cm_workflow_selector")
+            selected_index = workflow_options.index(selected_workflow_str)
+            
+            res = st.session_state["results"][selected_index]
+            fig = plot_confusion_matrix(res["Confusion"], res["Class Labels"], title=f"Confusion Matrix for {selected_workflow_str}")
+            st.plotly_chart(fig, use_container_width=True)
 
     with main_tabs[3]: # Feature Importances Tab
         st.subheader("Feature Importances")
-        cols = st.columns(len(st.session_state["results"]))
-        for i, col in enumerate(cols):
-            with col:
-                res = st.session_state["results"][i]
-                if res["Importances"] is not None:
-                    plot_importances(res["Importances"], title=f"Workflow {i+1}")
-                else:
-                    st.info(f"Importances not available for Workflow {i+1}")
+        if st.session_state["results"]:
+            # Filter results to only include those with importance data
+            importance_results = [(i, res) for i, res in enumerate(st.session_state["results"]) if res.get("Importances") is not None]
+            
+            if not importance_results:
+                st.info("No feature importance data available for the selected workflows.")
+            else:
+                workflow_options = [f"Workflow {i+1}" for i, _ in importance_results]
+                selected_workflow_str = st.selectbox("Select Workflow to Display", workflow_options, key="fi_workflow_selector")
+                
+                # Find the corresponding result
+                selected_original_index = [i for i, res in importance_results if f"Workflow {i+1}" == selected_workflow_str][0]
+                res = st.session_state["results"][selected_original_index]
+
+                fig = plot_importances(res["Importances"], title=f"Feature Importances for {selected_workflow_str}")
+                st.plotly_chart(fig, use_container_width=True)

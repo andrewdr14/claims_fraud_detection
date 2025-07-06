@@ -1,3 +1,14 @@
+---
+title: Claims Fraud Detection
+emoji: 🛡️
+colorFrom: blue
+colorTo: green
+sdk: streamlit
+sdk_version: 1.30.0
+app_file: Home.py
+pinned: false
+---
+
 # Claims Fraud Detection
 
 A machine learning project focused on detecting fraudulent insurance claims. This repository provides a comprehensive pipeline from data exploration and feature engineering to model training, evaluation, and an interactive Streamlit dashboard for comparing different ML workflows.

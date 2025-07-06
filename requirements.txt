@@ -10,3 +10,4 @@ jupyter
 imbalanced-learn==0.12.2
 plotly==5.22.0
 statsmodels==0.14.2
+joblib==1.4.2
