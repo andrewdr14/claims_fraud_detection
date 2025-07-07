@@ -1,14 +1,3 @@
----
-title: Claims Fraud Detection
-emoji: 🛡️
-colorFrom: blue
-colorTo: green
-sdk: streamlit
-sdk_version: 1.30.0
-app_file: Home.py
-pinned: false
----
-
 # Claims Fraud Detection
 
 A machine learning project focused on detecting fraudulent insurance claims. This repository provides a comprehensive pipeline from data exploration and feature engineering to model training, evaluation, and an interactive Streamlit dashboard for comparing different ML workflows.
@@ -157,11 +146,5 @@ This project implements an ML workflow:
     -   **CatBoost**: Excels at handling categorical features natively.
 -   **Hyperparameter Tuning**: Uses GridSearchCV to find optimal model parameters.
 -   **Evaluation**: Models are assessed using standard metrics such as accuracy, classification reports, and confusion matrices.
-
----
-
-## Improvements
-
--   **Configurable Random State**: The `random_state` for data splitting, feature selection, and model training is now configurable within the Streamlit app, allowing for more flexible experimentation and verification of model behavior.
 
 ---
